@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>No Dots – Advent Game</title>
+  <title>No Dots – Advent Mini-Game</title>
 
-  <!-- Festive Calligraphy Font -->
+  <!-- Festive Font similar to your puzzle -->
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 
   <style>
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
@@ -34,6 +35,7 @@
       color: #b30000;
       margin: 0;
       text-shadow: 0 0 4px rgba(255,255,255,0.7);
+      text-align: center;
     }
 
     h2 {
@@ -42,9 +44,10 @@
       color: #b30000;
       margin: 0;
       text-shadow: 0 0 4px rgba(255,255,255,0.7);
+      text-align: center;
     }
 
-    /* Snowflakes (background flair) */
+    /* Snowflakes */
     .snowflake {
       position: fixed;
       top: -10px;
@@ -60,14 +63,20 @@
     }
 
     /* Info bar */
-    #infoBar {
+    #topBar {
       margin-top: 15px;
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #infoRow {
+      display: flex;
       gap: 10px;
       align-items: center;
-      font-size: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .miniLabel {
@@ -78,6 +87,7 @@
       padding: 6px 12px;
       border-radius: 10px;
       box-shadow: 0 0 6px rgba(0,0,0,0.15);
+      font-size: 14px;
     }
 
     .miniLabel-title {
@@ -85,26 +95,55 @@
       color: #555;
     }
 
-    #piecePreview {
+    #roundColors {
       display: flex;
       gap: 4px;
     }
 
-    .piece-block {
-      width: 20px;
-      height: 20px;
+    .roundColorBox {
+      width: 22px;
+      height: 22px;
       border-radius: 6px;
-      border: 2px solid rgba(0,0,0,0.15);
-      background: #ccc;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      border: 2px solid rgba(0,0,0,0.18);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.18);
+      opacity: 0.8;
+      transform: scale(0.9);
+      transition: transform 0.12s ease, opacity 0.12s ease, box-shadow 0.12s ease;
     }
 
-    /* Frame around game */
+    .roundColorBox.active {
+      opacity: 1;
+      transform: scale(1.1);
+      box-shadow: 0 0 8px rgba(255,255,255,0.9), 0 0 8px rgba(0,0,0,0.3);
+    }
+
+    #tutorialBtn {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      background: #ffffffdd;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #tutorialBtn span {
+      font-size: 16px;
+    }
+
+    #tutorialBtn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    /* Game frame */
     #frame {
       padding: 16px;
       border: 8px solid #b30000;
       border-radius: 20px;
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.88);
       box-shadow: 0 0 15px rgba(0,0,0,0.2);
       margin-top: 18px;
       display: flex;
@@ -113,139 +152,125 @@
       max-width: 95vw;
     }
 
-    /* 6x6 board */
+    /* Board */
     #board {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 6px;
-      width: min(90vw, 360px);
-      height: min(90vw, 360px);
-      touch-action: manipulation;
+      width: min(90vw, 320px);
+      height: min(90vw, 320px);
+      touch-action: none; /* important for mobile swiping */
     }
 
     .cell {
       position: relative;
       border-radius: 12px;
-      background: #dcdcdc; /* empty cell */
+      background: #dcdcdc; /* empty */
       box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,0.8),
+        inset 0 0 0 1px rgba(255,255,255,0.85),
         0 1px 2px rgba(0,0,0,0.2);
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.18s ease;
       cursor: pointer;
-      overflow: visible;
+      overflow: hidden;
+      transition:
+        background 0.18s ease,
+        transform 0.08s ease,
+        box-shadow 0.12s ease,
+        opacity 0.2s ease;
     }
 
     .cell.filled {
       box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,0.85),
-        0 2px 4px rgba(0,0,0,0.3);
+        inset 0 0 0 1px rgba(255,255,255,0.9),
+        0 2px 5px rgba(0,0,0,0.35);
     }
 
     .cell.preview {
-      transform: scale(1.05);
-      box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,0.9),
-        0 3px 6px rgba(0,0,0,0.35);
+      outline: 2px dashed rgba(255,255,255,0.9);
+      box-shadow: 0 0 6px rgba(0,0,0,0.45);
+    }
+
+    .cell.placed {
+      animation: popIn 0.18s ease-out;
+    }
+
+    @keyframes popIn {
+      0%   { transform: scale(0.2); opacity: 0; }
+      70%  { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1.0); }
+    }
+
+    .cell.error {
+      animation: wiggle 0.35s ease;
+    }
+
+    @keyframes wiggle {
+      0%   { transform: translateX(0); opacity: 1; }
+      20%  { transform: translateX(-4px); }
+      40%  { transform: translateX(4px); }
+      60%  { transform: translateX(-3px); }
+      80%  { transform: translateX(3px); }
+      100% { transform: translateX(0); opacity: 0; }
+    }
+
+    .cell.dance {
+      animation: dance 0.8s var(--delay, 0s) ease-in-out infinite alternate;
+    }
+
+    @keyframes dance {
+      0%   { transform: translateY(0) scale(1) rotate(0deg); }
+      40%  { transform: translateY(-6px) scale(1.06) rotate(-3deg); }
+      70%  { transform: translateY(2px) scale(0.98) rotate(3deg); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    .score-popup {
+      position: absolute;
+      font-size: 13px;
+      color: #fff;
+      text-shadow: 0 0 4px rgba(0,0,0,0.7);
+      animation: floatUp 0.5s ease-out forwards;
+      pointer-events: none;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes floatUp {
+      0%   { transform: translate(-50%, -50%); opacity: 1; }
+      100% { transform: translate(-50%, -100%); opacity: 0; }
     }
 
     .cell.disabled {
       cursor: default;
-      opacity: 0.6;
     }
 
-    /* Pop-in animation for newly placed blocks */
-    .cell.just-placed {
-      animation: popIn 0.22s ease-out;
-    }
-
-    @keyframes popIn {
-      0%   { transform: scale(0.4); opacity: 0; }
-      70%  { transform: scale(1.1); opacity: 1; }
-      100% { transform: scale(1); }
-    }
-
-    /* Wiggle + fade for invalid placement */
-    .cell.invalid {
-      animation: wiggle 0.3s ease, fadeOutQuick 0.3s ease;
-    }
-
-    @keyframes wiggle {
-      0%   { transform: translateX(0); }
-      25%  { transform: translateX(-4px); }
-      50%  { transform: translateX(4px); }
-      75%  { transform: translateX(-3px); }
-      100% { transform: translateX(0); }
-    }
-
-    @keyframes fadeOutQuick {
-      from { opacity: 1; }
-      to   { opacity: 0.1; }
-    }
-
-    /* Floating +N score bubble */
-    .score-bubble {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 14px;
-      font-weight: 700;
-      color: #ffffff;
-      text-shadow: 0 0 4px rgba(0,0,0,0.7);
-      pointer-events: none;
-      animation: floatUp 0.7s ease-out forwards;
-    }
-
-    @keyframes floatUp {
-      0% {
-        transform: translate(-50%, -50%);
-        opacity: 1;
-      }
-      100% {
-        transform: translate(-50%, -130%);
-        opacity: 0;
-      }
-    }
-
-    /* Game over dance */
-    .cell.filled.dance {
-      animation: dance 0.7s ease-in-out infinite;
-      animation-delay: var(--dance-delay, 0s);
-    }
-
-    @keyframes dance {
-      0%   { transform: translateY(0) scale(1); }
-      25%  { transform: translateY(-3px) scale(1.05) rotate(-2deg); }
-      50%  { transform: translateY(0) scale(1); }
-      75%  { transform: translateY(-2px) scale(1.03) rotate(2deg); }
-      100% { transform: translateY(0) scale(1); }
-    }
-
-    /* Message + restart button */
     #message {
-      margin-top: 14px;
-      text-align: center;
+      margin-top: 10px;
+      min-height: 1.6em;
       font-size: 15px;
       color: #444;
-      min-height: 2.2em;
+      text-align: center;
     }
 
-    .win-title {
-      font-family: 'Great Vibes', cursive;
-      font-size: 2.4rem;
-      background: linear-gradient(45deg, #b30000, #d4af37, #008000);
-      -webkit-background-clip: text;
-      color: transparent;
-      text-shadow: 0 0 7px rgba(255,255,255,0.9);
-      margin-bottom: 4px;
+    #endMessage {
+      margin-top: 16px;
+      background: linear-gradient(120deg, #b30000, #d4af37, #008000);
+      padding: 10px 16px;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+      display: none;
     }
 
-    .win-sub {
-      font-size: 0.95rem;
-      color: #555;
+    #endMessage span.score {
+      font-size: 18px;
+      font-weight: 700;
     }
 
     #restartBtn {
@@ -255,22 +280,90 @@
       border: none;
       background: #b30000;
       color: #fff;
-      font-size: 16px;
+      font-size: 15px;
       cursor: pointer;
       box-shadow: 0 3px 8px rgba(0,0,0,0.25);
       transition: background 0.2s ease, transform 0.08s ease;
     }
-
+    #restartBtn:hover {
+      background: #d00000;
+    }
     #restartBtn:active {
       transform: translateY(1px) scale(0.98);
     }
 
-    #restartBtn:hover {
-      background: #d00000;
+    /* Tutorial overlay */
+    #tutorialOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    #tutorialCard {
+      background: #ffffffee;
+      border-radius: 18px;
+      padding: 18px 20px;
+      max-width: 90vw;
+      width: 340px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #tutorialCard h3 {
+      margin: 0;
+      font-size: 18px;
+      color: #b30000;
+    }
+
+    #tutorialCard p {
+      margin: 0;
+      font-size: 14px;
+      color: #333;
+    }
+
+    #tutorialSteps {
+      font-size: 13px;
+      color: #777;
+    }
+
+    #tutorialButtons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      gap: 8px;
+    }
+
+    .btnSecondary, .btnPrimary {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btnSecondary {
+      background: #eee;
+    }
+
+    .btnPrimary {
+      background: #b30000;
+      color: #fff;
+    }
+
+    .btnPrimary:active,
+    .btnSecondary:active {
+      transform: translateY(1px) scale(0.98);
     }
 
     @media (max-width: 480px) {
-      h1 { font-size: 2.3rem; }
+      h1 { font-size: 2.4rem; }
       h2 { font-size: 1.8rem; }
     }
   </style>
@@ -278,24 +371,45 @@
 <body>
 
   <h1>Felice Adventskalender</h1>
-  <h2>No Dots Advent-Spiel 🎄</h2>
+  <h2>No Dots Mini-Spiel 🎄</h2>
 
-  <div id="infoBar">
-    <div class="miniLabel">
-      <span class="miniLabel-title">Punkte:</span>
-      <span id="score">0</span>
+  <div id="topBar">
+    <div id="infoRow">
+      <div class="miniLabel">
+        <span class="miniLabel-title">Punkte:</span>
+        <span id="score">0</span>
+      </div>
+      <div class="miniLabel">
+        <span class="miniLabel-title">Diese Runde:</span>
+        <div id="roundColors"></div>
+      </div>
     </div>
+    <button id="tutorialBtn">
+      <span>❓</span> Tutorial
+    </button>
+  </div>
 
-    <div class="miniLabel">
-      <span class="miniLabel-title">Nächste Blöcke:</span>
-      <div id="piecePreview"></div>
-    </div>
+  <div id="endMessage">
+    🎉 Congrats!! Dein Highscore ist <span class="score">0</span> ✨
   </div>
 
   <div id="frame">
     <div id="board"></div>
     <div id="message"></div>
     <button id="restartBtn">Neu starten</button>
+  </div>
+
+  <!-- Tutorial Overlay -->
+  <div id="tutorialOverlay">
+    <div id="tutorialCard">
+      <h3>No Dots – Wie geht das?</h3>
+      <p id="tutorialText"></p>
+      <div id="tutorialSteps"></div>
+      <div id="tutorialButtons">
+        <button class="btnSecondary" id="tutorialClose">Schließen</button>
+        <button class="btnPrimary" id="tutorialNext">Weiter</button>
+      </div>
+    </div>
   </div>
 
   <!-- Snowflakes -->
@@ -313,44 +427,149 @@
 
   <script>
     // =========================
+    // AUDIO (simple Web Audio beeps)
+    // =========================
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) audioCtx = new AC();
+      }
+      return audioCtx;
+    }
+
+    function playTone(freq, duration, type = 'sine', volume = 0.18) {
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.value = volume;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const now = ctx.currentTime;
+      osc.start(now);
+      gain.gain.setValueAtTime(volume, now);
+      gain.gain.linearRampToValueAtTime(0, now + duration);
+      osc.stop(now + duration);
+    }
+
+    function playPlaceSound() {
+      playTone(650, 0.08, 'square', 0.12);
+    }
+
+    function playScoreSound() {
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const base = ctx.currentTime;
+      [0, 0.08, 0.16].forEach((offset, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = 550 + i * 220;
+        gain.gain.value = 0.16;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        const t = base + offset;
+        osc.start(t);
+        gain.gain.setValueAtTime(0.16, t);
+        gain.gain.linearRampToValueAtTime(0, t + 0.12);
+        osc.stop(t + 0.12);
+      });
+    }
+
+    function playErrorSound() {
+      playTone(220, 0.25, 'sawtooth', 0.16);
+    }
+
+    // =========================
     // GAME LOGIC
     // =========================
 
-    const size = 6; // 6x6 grid
+    const size = 5;  // 5x5 board
+
     const boardEl = document.getElementById("board");
     const scoreEl = document.getElementById("score");
-    const piecePreviewEl = document.getElementById("piecePreview");
+    const roundColorsEl = document.getElementById("roundColors");
     const messageEl = document.getElementById("message");
     const restartBtn = document.getElementById("restartBtn");
+    const endMessageEl = document.getElementById("endMessage");
+    const endMessageScoreEl = endMessageEl.querySelector(".score");
 
-    const BASE_COLORS = [
+    const tutorialBtn = document.getElementById("tutorialBtn");
+    const tutorialOverlay = document.getElementById("tutorialOverlay");
+    const tutorialText = document.getElementById("tutorialText");
+    const tutorialSteps = document.getElementById("tutorialSteps");
+    const tutorialClose = document.getElementById("tutorialClose");
+    const tutorialNext = document.getElementById("tutorialNext");
+
+    const baseColors = [
       "#e74c3c", // red
       "#f1c40f", // yellow
       "#2ecc71", // green
       "#3498db", // blue
       "#9b59b6", // purple
-      "#e67e22"  // orange
+      "#e67e22", // orange
+      "#1abc9c"  // teal
     ];
 
-    let cells = [];
+    let unlockedColors = 4; // start with 4
     let board = [];
+    let cells = [];
     let score = 0;
     let gameOver = false;
 
-    let currentPiece = [];     // array of colors for this round (length 1-4)
+    let currentRoundColors = [];
+    let currentPath = [];
     let isDrawing = false;
-    let activePointerId = null;
-    let currentPath = [];      // indices in order of swipe
 
-    function getAvailableColors() {
-      // Difficulty: more colors with higher score
-      let maxColors = 4;
-      if (score >= 150) {
-        maxColors = 6;
-      } else if (score >= 80) {
-        maxColors = 5;
+    let isResolvingMatch = false;
+
+    const tutorialPages = [
+      {
+        text: "Ziel des Spiels: Lege bunte Blöcke so aufs Feld, dass mindestens 3 gleichfarbige Blöcke zusammenhängen. Dann verschwinden sie und du bekommst Punkte.",
+        hint: "Mehr Blöcke auf einmal = viel mehr Punkte (N×N)!"
+      },
+      {
+        text: "In jeder Runde bekommst du 1–4 Farben (oben angezeigt). Wische über leere Felder, um GENAU diese Anzahl an Feldern zu belegen.",
+        hint: "Die Reihenfolge der Farben ist wichtig – dein Wischpfad folgt genau dieser Reihenfolge."
+      },
+      {
+        text: "Wenn 3 oder mehr verbundene Blöcke einer Farbe entstehen, verschwinden sie. N ist die Gesamtzahl aller gelöschten Blöcke dieser Runde – dein Score steigt um N×N.",
+        hint: "Wenn das Feld voll ist, ist das Spiel vorbei. Viel Spaß! 🎄"
       }
-      return BASE_COLORS.slice(0, maxColors);
+    ];
+    let tutorialIndex = 0;
+
+    function updateTutorial() {
+      const page = tutorialPages[tutorialIndex];
+      tutorialText.textContent = page.text;
+      tutorialSteps.textContent = `Schritt ${tutorialIndex + 1} von ${tutorialPages.length} – ${page.hint}`;
+      tutorialNext.textContent = tutorialIndex === tutorialPages.length - 1 ? "Los geht's!" : "Weiter";
+    }
+
+    tutorialBtn.addEventListener("click", () => {
+      tutorialIndex = 0;
+      updateTutorial();
+      tutorialOverlay.style.display = "flex";
+    });
+
+    tutorialClose.addEventListener("click", () => {
+      tutorialOverlay.style.display = "none";
+    });
+
+    tutorialNext.addEventListener("click", () => {
+      if (tutorialIndex < tutorialPages.length - 1) {
+        tutorialIndex++;
+        updateTutorial();
+      } else {
+        tutorialOverlay.style.display = "none";
+      }
+    });
+
+    function availableColors() {
+      return baseColors.slice(0, unlockedColors);
     }
 
     function initGame() {
@@ -359,177 +578,74 @@
       boardEl.innerHTML = "";
       score = 0;
       scoreEl.textContent = "0";
-      messageEl.textContent = "";
       gameOver = false;
-      currentPiece = [];
       isDrawing = false;
-      activePointerId = null;
+      isResolvingMatch = false;
+      currentRoundColors = [];
       currentPath = [];
+      messageEl.textContent = "";
+      endMessageEl.style.display = "none";
+      unlockedColors = 4;
 
-      // Build board
+      // build board
       for (let i = 0; i < size * size; i++) {
         const cell = document.createElement("div");
         cell.className = "cell";
         cell.dataset.index = i;
-
-        cell.addEventListener("pointerdown", handlePointerDown);
-        cell.addEventListener("pointerenter", handlePointerEnter);
-
+        cell.style.setProperty('--delay', '0s');
         boardEl.appendChild(cell);
         cells.push(cell);
       }
 
-      window.addEventListener("pointerup", handlePointerUp);
-
-      generateNewPiece();
+      generateNewRound();
       renderBoard();
     }
 
-    function countEmptyCells() {
-      return board.filter(v => v === null).length;
-    }
-
-    function generateNewPiece() {
-      const empties = countEmptyCells();
-      if (empties === 0) {
-        triggerGameOver();
+    function generateNewRound() {
+      const emptyCount = board.filter(v => v === null).length;
+      if (emptyCount === 0) {
+        endGame();
         return;
       }
-
-      const maxLength = Math.min(4, empties);
-      const length = Math.floor(Math.random() * maxLength) + 1; // 1..maxLength
-      const availableColors = getAvailableColors();
-
-      currentPiece = [];
-      for (let i = 0; i < length; i++) {
-        const c = availableColors[Math.floor(Math.random() * availableColors.length)];
-        currentPiece.push(c);
+      const maxLen = Math.min(4, emptyCount);
+      const len = Math.max(1, Math.floor(Math.random() * maxLen) + 1);
+      const cols = [];
+      const palette = availableColors();
+      for (let i = 0; i < len; i++) {
+        const c = palette[Math.floor(Math.random() * palette.length)];
+        cols.push(c);
       }
-
-      renderPiecePreview();
-    }
-
-    function renderPiecePreview() {
-      piecePreviewEl.innerHTML = "";
-      currentPiece.forEach(color => {
-        const block = document.createElement("div");
-        block.className = "piece-block";
-        block.style.background = color;
-        piecePreviewEl.appendChild(block);
-      });
-    }
-
-    function handlePointerDown(e) {
-      if (gameOver || currentPiece.length === 0) return;
-      if (isDrawing) return;
-
-      const idx = parseInt(e.currentTarget.dataset.index, 10);
-      if (board[idx] !== null) return;
-
-      isDrawing = true;
-      activePointerId = e.pointerId;
+      currentRoundColors = cols;
       currentPath = [];
-
-      startPathAt(idx);
+      renderRoundColors();
     }
 
-    function handlePointerEnter(e) {
-      if (!isDrawing) return;
-      if (e.pointerId !== activePointerId) return;
-
-      const idx = parseInt(e.currentTarget.dataset.index, 10);
-      extendPathTo(idx);
-    }
-
-    function handlePointerUp(e) {
-      if (!isDrawing) return;
-      if (e.pointerId !== activePointerId) return;
-
-      finishPath();
-      isDrawing = false;
-      activePointerId = null;
-    }
-
-    function startPathAt(index) {
-      if (board[index] !== null) return;
-
-      currentPath.push(index);
-      const cell = cells[index];
-      cell.classList.add("preview");
-      cell.style.background = currentPiece[0];
-    }
-
-    function extendPathTo(index) {
-      if (board[index] !== null) return;
-      if (currentPath.includes(index)) return; // no revisiting
-      if (currentPath.length >= currentPiece.length) return;
-
-      const lastIndex = currentPath[currentPath.length - 1];
-      const lastRow = Math.floor(lastIndex / size);
-      const lastCol = lastIndex % size;
-      const row = Math.floor(index / size);
-      const col = index % size;
-
-      const dr = Math.abs(row - lastRow);
-      const dc = Math.abs(col - lastCol);
-
-      // Only orthogonal moves (no diagonal)
-      if (dr + dc !== 1) return;
-
-      currentPath.push(index);
-      const cell = cells[index];
-      const colorIndex = currentPath.length - 1;
-      cell.classList.add("preview");
-      cell.style.background = currentPiece[colorIndex];
-    }
-
-    function finishPath() {
-      if (currentPath.length === currentPiece.length && currentPiece.length > 0) {
-        // Valid placement: commit all blocks in order
-        currentPath.forEach((idx, i) => {
-          board[idx] = currentPiece[i];
-          const cell = cells[idx];
-          cell.classList.remove("preview", "invalid");
-          cell.classList.add("filled", "just-placed");
-          cell.addEventListener("animationend", () => {
-            cell.classList.remove("just-placed");
-          }, { once: true });
-        });
-
-        currentPath = [];
-        currentPiece = [];
-        renderBoard();
-        resolveMatchesAndScore();
-      } else {
-        // Invalid: player did not use all colors → wiggle and fade, then revert
-        showInvalidPlacement();
-      }
-    }
-
-    function showInvalidPlacement() {
-      currentPath.forEach(idx => {
-        const cell = cells[idx];
-        cell.classList.add("invalid");
+    function renderRoundColors() {
+      roundColorsEl.innerHTML = "";
+      currentRoundColors.forEach((c, idx) => {
+        const box = document.createElement("div");
+        box.className = "roundColorBox";
+        box.style.background = c;
+        if (idx === 0) box.classList.add("active");
+        roundColorsEl.appendChild(box);
       });
+    }
 
-      setTimeout(() => {
-        currentPath.forEach(idx => {
-          const cell = cells[idx];
-          cell.classList.remove("invalid", "preview");
-        });
-        currentPath = [];
-        renderBoard();
-      }, 320);
+    function activateRoundColorIndex(idx) {
+      const boxes = roundColorsEl.querySelectorAll(".roundColorBox");
+      boxes.forEach((b, i) => {
+        if (i === idx) b.classList.add("active");
+        else b.classList.remove("active");
+      });
     }
 
     function renderBoard() {
       for (let i = 0; i < board.length; i++) {
-        const color = board[i];
         const cell = cells[i];
-
+        const color = board[i];
+        cell.classList.remove("filled");
         if (color === null) {
           cell.style.background = "#dcdcdc";
-          cell.classList.remove("filled");
         } else {
           cell.style.background = color;
           cell.classList.add("filled");
@@ -537,43 +653,160 @@
       }
     }
 
-    // Find all groups of size >=3 of same colour (4-directionally connected)
+    function indexToRC(idx) {
+      return { r: Math.floor(idx / size), c: idx % size };
+    }
+
+    function isNeighbor(a, b) {
+      const ra = Math.floor(a / size), ca = a % size;
+      const rb = Math.floor(b / size), cb = b % size;
+      return Math.abs(ra - rb) + Math.abs(ca - cb) === 1;
+    }
+
+    function handlePointerDown(idx, e) {
+      if (gameOver || isResolvingMatch) return;
+      if (board[idx] !== null) return;
+      if (currentRoundColors.length === 0) return;
+
+      isDrawing = true;
+      currentPath = [];
+      addToPath(idx);
+      if (e) e.preventDefault();
+    }
+
+    function addToPath(idx) {
+      if (currentPath.length >= currentRoundColors.length) return;
+      if (board[idx] !== null) return; // must be empty
+      if (currentPath.includes(idx)) return;
+
+      if (currentPath.length > 0) {
+        const last = currentPath[currentPath.length - 1];
+        if (!isNeighbor(last, idx)) return; // only 4-directional neighbors
+      }
+
+      currentPath.push(idx);
+      const step = currentPath.length - 1;
+      const color = currentRoundColors[step];
+      const cell = cells[idx];
+      cell.classList.add("preview");
+      cell.style.background = color;
+      cell.classList.add("placed");
+      activateRoundColorIndex(step);
+      playPlaceSound();
+      setTimeout(() => cell.classList.remove("placed"), 200);
+    }
+
+    function clearPreview(errorAnimation = false) {
+      currentPath.forEach(idx => {
+        const cell = cells[idx];
+        if (errorAnimation) {
+          cell.classList.add("error");
+          setTimeout(() => {
+            cell.classList.remove("error");
+            cell.classList.remove("preview");
+            if (board[idx] === null) {
+              cell.style.background = "#dcdcdc";
+            } else {
+              cell.style.background = board[idx];
+            }
+          }, 350);
+        } else {
+          cell.classList.remove("preview");
+          if (board[idx] === null) {
+            cell.style.background = "#dcdcdc";
+          } else {
+            cell.style.background = board[idx];
+          }
+        }
+      });
+      if (!errorAnimation) {
+        currentPath = [];
+      }
+    }
+
+    function handlePointerMoveOver(idx, e) {
+      if (!isDrawing) return;
+      if (gameOver || isResolvingMatch) return;
+      addToPath(idx);
+      if (e) e.preventDefault();
+    }
+
+    function handlePointerUp(e) {
+      if (!isDrawing) return;
+      isDrawing = false;
+
+      if (currentPath.length === 0) return;
+
+      // Require using all colors
+      if (currentPath.length !== currentRoundColors.length) {
+        // error
+        messageEl.textContent = "Du musst alle Farben dieser Runde verwenden!";
+        clearPreview(true);
+        currentPath = [];
+        activateRoundColorIndex(0);
+        playErrorSound();
+        return;
+      }
+
+      // Commit placement
+      for (let i = 0; i < currentPath.length; i++) {
+        const idx = currentPath[i];
+        const color = currentRoundColors[i];
+        board[idx] = color;
+        const cell = cells[idx];
+        cell.classList.remove("preview");
+        cell.classList.add("filled");
+        cell.classList.add("placed");
+        setTimeout(() => cell.classList.remove("placed"), 250);
+      }
+      currentPath = [];
+      messageEl.textContent = "";
+      renderBoard();
+
+      // Check matches
+      const groups = findMatchingGroups();
+      if (groups.length > 0) {
+        processGroups(groups);
+      } else {
+        // no match, just generate next round and check game over
+        updateUnlockedColors();
+        generateNewRound();
+        checkGameOver();
+      }
+    }
+
     function findMatchingGroups() {
       const visited = Array(board.length).fill(false);
       const groups = [];
 
-      const inBounds = (row, col) =>
-        row >= 0 && row < size && col >= 0 && col < size;
-
-      const index = (row, col) => row * size + col;
+      const inBounds = (r, c) => r >= 0 && r < size && c >= 0 && c < size;
+      const idx = (r, c) => r * size + c;
 
       for (let r = 0; r < size; r++) {
         for (let c = 0; c < size; c++) {
-          const startIdx = index(r, c);
-          if (visited[startIdx]) continue;
-          const color = board[startIdx];
+          const startI = idx(r, c);
+          if (visited[startI]) continue;
+          const color = board[startI];
           if (color === null) continue;
 
-          const stack = [startIdx];
+          const stack = [startI];
           const component = [];
-          visited[startIdx] = true;
+          visited[startI] = true;
 
           while (stack.length > 0) {
             const cur = stack.pop();
             component.push(cur);
-            const curRow = Math.floor(cur / size);
-            const curCol = cur % size;
-
+            const rr = Math.floor(cur / size);
+            const cc = cur % size;
             const neighbors = [
-              [curRow - 1, curCol],
-              [curRow + 1, curCol],
-              [curRow, curCol - 1],
-              [curRow, curCol + 1],
+              [rr - 1, cc],
+              [rr + 1, cc],
+              [rr, cc - 1],
+              [rr, cc + 1]
             ];
-
             neighbors.forEach(([nr, nc]) => {
               if (!inBounds(nr, nc)) return;
-              const ni = index(nr, nc);
+              const ni = idx(nr, nc);
               if (visited[ni]) return;
               if (board[ni] === color) {
                 visited[ni] = true;
@@ -587,97 +820,129 @@
           }
         }
       }
-
       return groups;
     }
 
-    function resolveMatchesAndScore() {
-      const groups = findMatchingGroups();
-      if (groups.length === 0) {
-        // No matches; just continue with next piece or end if full
-        if (countEmptyCells() === 0) {
-          triggerGameOver();
-        } else {
-          generateNewPiece();
-        }
+    function processGroups(groups) {
+      isResolvingMatch = true;
+
+      const allIndicesSet = new Set();
+      groups.forEach(g => g.forEach(i => allIndicesSet.add(i)));
+      const indices = Array.from(allIndicesSet);
+      const N = indices.length;
+
+      if (N < 3) {
+        isResolvingMatch = false;
+        updateUnlockedColors();
+        generateNewRound();
+        checkGameOver();
         return;
       }
 
-      // N = total blocks in all groups
-      const allIndices = new Set();
-      groups.forEach(group => {
-        group.forEach(idx => allIndices.add(idx));
+      const gain = N * N;
+      score += gain;
+      scoreEl.textContent = String(score);
+      messageEl.textContent = `Kombination! N = ${N}, Punkte: +${gain}`;
+
+      // Score popups & float-out animation
+      indices.forEach(i => {
+        const cell = cells[i];
+        const popup = document.createElement("div");
+        popup.className = "score-popup";
+        popup.textContent = `+${N}`;
+        cell.appendChild(popup);
+
+        cell.style.zIndex = "10";
+        setTimeout(() => {
+          popup.remove();
+          cell.style.zIndex = "";
+        }, 500);
       });
 
-      const N = allIndices.size;
-      const scoreIncrease = N * N;
+      playScoreSound();
 
-      // Show +N on each disappearing block, animate them, then remove
-      allIndices.forEach(idx => {
-        const cell = cells[idx];
-
-        const bubble = document.createElement("div");
-        bubble.className = "score-bubble";
-        bubble.textContent = "+" + N;
-        cell.appendChild(bubble);
-
-        bubble.addEventListener("animationend", () => {
-          bubble.remove();
-        }, { once: true });
-      });
-
-      // After a short delay, clear the blocks and update score
+      // Remove tiles after short delay
       setTimeout(() => {
-        allIndices.forEach(idx => {
-          board[idx] = null;
+        indices.forEach(i => {
+          board[i] = null;
         });
-        score += scoreIncrease;
-        scoreEl.textContent = score.toString();
         renderBoard();
-
-        if (navigator.vibrate) navigator.vibrate(80);
-
-        if (countEmptyCells() === 0) {
-          triggerGameOver();
-        } else {
-          generateNewPiece();
-        }
-      }, 260);
+        isResolvingMatch = false;
+        updateUnlockedColors();
+        generateNewRound();
+        checkGameOver();
+      }, 420);
     }
 
-    function triggerGameOver() {
+    function updateUnlockedColors() {
+      let newUnlocked = 4;
+      if (score >= 80) newUnlocked = 5;
+      if (score >= 150) newUnlocked = 6;
+      if (newUnlocked !== unlockedColors) {
+        unlockedColors = newUnlocked;
+        messageEl.textContent = "Neue Farbe freigeschaltet! 🎨";
+      }
+    }
+
+    function checkGameOver() {
+      if (board.some(v => v === null)) return; // still space
+      endGame();
+    }
+
+    function endGame() {
       if (gameOver) return;
       gameOver = true;
+      isDrawing = false;
+      isResolvingMatch = false;
+      currentRoundColors = [];
+      renderRoundColors();
 
-      // Dance animation for all filled blocks
+      messageEl.textContent = "Keine Züge mehr!";
+      endMessageScoreEl.textContent = String(score);
+      endMessageEl.style.display = "block";
+
+      // Make all blocks dance
       cells.forEach((cell, idx) => {
         if (board[idx] !== null) {
+          const delay = (idx % size) * 0.08 + Math.floor(idx / size) * 0.05;
+          cell.style.setProperty('--delay', `${delay}s`);
           cell.classList.add("dance");
-          const delay = (idx * 0.07).toFixed(2) + "s";
-          cell.style.setProperty("--dance-delay", delay);
         }
-        cell.classList.add("disabled");
       });
-
-      messageEl.innerHTML = `
-        <div class="win-title">Congrats!! Dein Highscore ist ${score}</div>
-        <div class="win-sub">Tippe auf "Neu starten" für eine neue Runde 🎄</div>
-      `;
-
-      if (navigator.vibrate) navigator.vibrate([100, 80, 100]);
     }
 
     restartBtn.addEventListener("click", () => {
-      // clear dance classes before restarting
-      cells.forEach(cell => {
-        cell.classList.remove("dance", "disabled");
-        cell.style.removeProperty("--dance-delay");
-      });
       initGame();
     });
 
-    // Start game
-    initGame();
+    // Pointer events for swiping (works on touch + mouse)
+    function setupPointerEvents() {
+      // Use pointer events if available, fallback to mouse/touch events if needed
+      cells.forEach((cell, idx) => {
+        cell.addEventListener("pointerdown", (e) => {
+          handlePointerDown(idx, e);
+        });
+        cell.addEventListener("pointerenter", (e) => {
+          if (e.buttons === 1 || e.pointerType === "touch" || isDrawing) {
+            handlePointerMoveOver(idx, e);
+          }
+        });
+      });
+
+      document.addEventListener("pointerup", (e) => {
+        handlePointerUp(e);
+      });
+      document.addEventListener("pointercancel", (e) => {
+        handlePointerUp(e);
+      });
+    }
+
+    // Initialize after DOM is ready
+    document.addEventListener("DOMContentLoaded", () => {
+      initGame();
+      setupPointerEvents();
+    });
+
   </script>
 </body>
 </html>
