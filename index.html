@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>No Dots – Swipe Advent Game</title>
+  <title>No Dots – Advent Game</title>
 
   <!-- Festive Calligraphy Font -->
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -42,7 +44,7 @@
       text-shadow: 0 0 4px rgba(255,255,255,0.7);
     }
 
-    /* Snowflakes */
+    /* Snowflakes (background flair) */
     .snowflake {
       position: fixed;
       top: -10px;
@@ -53,17 +55,19 @@
       pointer-events: none;
       z-index: 1000;
     }
-    @keyframes fall { to { transform: translateY(110vh); } }
+    @keyframes fall {
+      to { transform: translateY(110vh); }
+    }
 
     /* Info bar */
     #infoBar {
       margin-top: 15px;
       display: flex;
-      gap: 12px;
-      align-items: center;
-      font-size: 16px;
       flex-wrap: wrap;
       justify-content: center;
+      gap: 10px;
+      align-items: center;
+      font-size: 16px;
     }
 
     .miniLabel {
@@ -81,33 +85,26 @@
       color: #555;
     }
 
-    #nextPiece {
+    #piecePreview {
       display: flex;
       gap: 4px;
     }
 
-    .miniColor {
+    .piece-block {
       width: 20px;
       height: 20px;
       border-radius: 6px;
-      border: 2px solid rgba(0,0,0,0.1);
+      border: 2px solid rgba(0,0,0,0.15);
       background: #ccc;
-      transform-origin: center;
-      animation: piecePop 0.25s ease-out;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
 
-    @keyframes piecePop {
-      0% { transform: scale(0.4); opacity: 0; }
-      70% { transform: scale(1.15); opacity: 1; }
-      100% { transform: scale(1); }
-    }
-
-    /* Frame */
+    /* Frame around game */
     #frame {
       padding: 16px;
       border: 8px solid #b30000;
       border-radius: 20px;
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.85);
       box-shadow: 0 0 15px rgba(0,0,0,0.2);
       margin-top: 18px;
       display: flex;
@@ -116,69 +113,139 @@
       max-width: 95vw;
     }
 
-    /* Board */
+    /* 6x6 board */
     #board {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 6px;
-      width: min(90vw, 320px);
-      height: min(90vw, 320px);
-      touch-action: none; /* important for pointer events & swiping */
+      width: min(90vw, 360px);
+      height: min(90vw, 360px);
+      touch-action: manipulation;
     }
 
     .cell {
+      position: relative;
       border-radius: 12px;
-      background: #dcdcdc;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8),
-                  0 1px 2px rgba(0,0,0,0.2);
+      background: #dcdcdc; /* empty cell */
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.8),
+        0 1px 2px rgba(0,0,0,0.2);
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
+      transition: background 0.18s ease;
       cursor: pointer;
-      overflow: hidden;
-      transition: background 0.2s ease, transform 0.08s ease;
+      overflow: visible;
     }
-
-    .cell:active { transform: scale(0.96); }
 
     .cell.filled {
       box-shadow:
         inset 0 0 0 1px rgba(255,255,255,0.85),
         0 2px 4px rgba(0,0,0,0.3);
-      animation: cellAppear 0.22s ease-out;
     }
 
-    @keyframes cellAppear {
-      0% { transform: scale(0.4); opacity: 0; }
-      70% { transform: scale(1.1); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
+    .cell.preview {
+      transform: scale(1.05);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.9),
+        0 3px 6px rgba(0,0,0,0.35);
     }
 
-    .cell.disabled { cursor: default; opacity: 0.6; }
+    .cell.disabled {
+      cursor: default;
+      opacity: 0.6;
+    }
 
-    .score-pop {
+    /* Pop-in animation for newly placed blocks */
+    .cell.just-placed {
+      animation: popIn 0.22s ease-out;
+    }
+
+    @keyframes popIn {
+      0%   { transform: scale(0.4); opacity: 0; }
+      70%  { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+
+    /* Wiggle + fade for invalid placement */
+    .cell.invalid {
+      animation: wiggle 0.3s ease, fadeOutQuick 0.3s ease;
+    }
+
+    @keyframes wiggle {
+      0%   { transform: translateX(0); }
+      25%  { transform: translateX(-4px); }
+      50%  { transform: translateX(4px); }
+      75%  { transform: translateX(-3px); }
+      100% { transform: translateX(0); }
+    }
+
+    @keyframes fadeOutQuick {
+      from { opacity: 1; }
+      to   { opacity: 0.1; }
+    }
+
+    /* Floating +N score bubble */
+    .score-bubble {
       position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       font-size: 14px;
       font-weight: 700;
       color: #ffffff;
-      text-shadow: 0 0 5px rgba(0,0,0,0.7);
-      animation: riseFade 0.6s ease-out forwards;
+      text-shadow: 0 0 4px rgba(0,0,0,0.7);
       pointer-events: none;
+      animation: floatUp 0.7s ease-out forwards;
     }
 
-    @keyframes riseFade {
-      0% { transform: translateY(0); opacity: 1; }
-      100% { transform: translateY(-20px); opacity: 0; }
+    @keyframes floatUp {
+      0% {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -130%);
+        opacity: 0;
+      }
     }
 
-    /* Message / button */
+    /* Game over dance */
+    .cell.filled.dance {
+      animation: dance 0.7s ease-in-out infinite;
+      animation-delay: var(--dance-delay, 0s);
+    }
+
+    @keyframes dance {
+      0%   { transform: translateY(0) scale(1); }
+      25%  { transform: translateY(-3px) scale(1.05) rotate(-2deg); }
+      50%  { transform: translateY(0) scale(1); }
+      75%  { transform: translateY(-2px) scale(1.03) rotate(2deg); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    /* Message + restart button */
     #message {
       margin-top: 14px;
       text-align: center;
-      font-size: 16px;
+      font-size: 15px;
       color: #444;
-      min-height: 1.5em;
+      min-height: 2.2em;
+    }
+
+    .win-title {
+      font-family: 'Great Vibes', cursive;
+      font-size: 2.4rem;
+      background: linear-gradient(45deg, #b30000, #d4af37, #008000);
+      -webkit-background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 7px rgba(255,255,255,0.9);
+      margin-bottom: 4px;
+    }
+
+    .win-sub {
+      font-size: 0.95rem;
+      color: #555;
     }
 
     #restartBtn {
@@ -193,8 +260,14 @@
       box-shadow: 0 3px 8px rgba(0,0,0,0.25);
       transition: background 0.2s ease, transform 0.08s ease;
     }
-    #restartBtn:active { transform: translateY(1px) scale(0.98); }
-    #restartBtn:hover { background: #d00000; }
+
+    #restartBtn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    #restartBtn:hover {
+      background: #d00000;
+    }
 
     @media (max-width: 480px) {
       h1 { font-size: 2.3rem; }
@@ -205,7 +278,7 @@
 <body>
 
   <h1>Felice Adventskalender</h1>
-  <h2>No Dots Swipe-Spiel 🎄</h2>
+  <h2>No Dots Advent-Spiel 🎄</h2>
 
   <div id="infoBar">
     <div class="miniLabel">
@@ -214,8 +287,8 @@
     </div>
 
     <div class="miniLabel">
-      <span class="miniLabel-title">Aktueller Zug:</span>
-      <div id="nextPiece"></div>
+      <span class="miniLabel-title">Nächste Blöcke:</span>
+      <div id="piecePreview"></div>
     </div>
   </div>
 
@@ -240,33 +313,45 @@
 
   <script>
     // =========================
-    // GAME SETUP
+    // GAME LOGIC
     // =========================
 
-    const size = 5;
+    const size = 6; // 6x6 grid
     const boardEl = document.getElementById("board");
     const scoreEl = document.getElementById("score");
-    const nextPieceEl = document.getElementById("nextPiece");
+    const piecePreviewEl = document.getElementById("piecePreview");
     const messageEl = document.getElementById("message");
     const restartBtn = document.getElementById("restartBtn");
 
-    const COLORS = [
+    const BASE_COLORS = [
       "#e74c3c", // red
       "#f1c40f", // yellow
       "#2ecc71", // green
       "#3498db", // blue
-      "#9b59b6"  // purple
+      "#9b59b6", // purple
+      "#e67e22"  // orange
     ];
 
-    let board = [];
     let cells = [];
+    let board = [];
     let score = 0;
     let gameOver = false;
 
-    // Current piece: array of colors, length 1–4
-    let currentPiece = [];
-    let dragging = false;
-    let dragPath = []; // indices on board
+    let currentPiece = [];     // array of colors for this round (length 1-4)
+    let isDrawing = false;
+    let activePointerId = null;
+    let currentPath = [];      // indices in order of swipe
+
+    function getAvailableColors() {
+      // Difficulty: more colors with higher score
+      let maxColors = 4;
+      if (score >= 150) {
+        maxColors = 6;
+      } else if (score >= 80) {
+        maxColors = 5;
+      }
+      return BASE_COLORS.slice(0, maxColors);
+    }
 
     function initGame() {
       board = Array(size * size).fill(null);
@@ -276,53 +361,171 @@
       scoreEl.textContent = "0";
       messageEl.textContent = "";
       gameOver = false;
+      currentPiece = [];
+      isDrawing = false;
+      activePointerId = null;
+      currentPath = [];
 
-      // Build DOM cells
+      // Build board
       for (let i = 0; i < size * size; i++) {
         const cell = document.createElement("div");
         cell.className = "cell";
         cell.dataset.index = i;
+
+        cell.addEventListener("pointerdown", handlePointerDown);
+        cell.addEventListener("pointerenter", handlePointerEnter);
+
         boardEl.appendChild(cell);
         cells.push(cell);
       }
 
-      // Pointer events for swiping
-      boardEl.addEventListener("pointerdown", onPointerDown);
-      boardEl.addEventListener("pointermove", onPointerMove);
-      window.addEventListener("pointerup", onPointerUp);
+      window.addEventListener("pointerup", handlePointerUp);
 
-      createNewPiece();
+      generateNewPiece();
       renderBoard();
     }
 
-    function randomColor() {
-      const idx = Math.floor(Math.random() * COLORS.length);
-      return COLORS[idx];
+    function countEmptyCells() {
+      return board.filter(v => v === null).length;
     }
 
-    function createNewPiece() {
-      const length = 1 + Math.floor(Math.random() * 4); // 1–4
+    function generateNewPiece() {
+      const empties = countEmptyCells();
+      if (empties === 0) {
+        triggerGameOver();
+        return;
+      }
+
+      const maxLength = Math.min(4, empties);
+      const length = Math.floor(Math.random() * maxLength) + 1; // 1..maxLength
+      const availableColors = getAvailableColors();
+
       currentPiece = [];
       for (let i = 0; i < length; i++) {
-        currentPiece.push(randomColor());
+        const c = availableColors[Math.floor(Math.random() * availableColors.length)];
+        currentPiece.push(c);
       }
-      renderNextPiece();
+
+      renderPiecePreview();
     }
 
-    function renderNextPiece() {
-      nextPieceEl.innerHTML = "";
+    function renderPiecePreview() {
+      piecePreviewEl.innerHTML = "";
       currentPiece.forEach(color => {
-        const mini = document.createElement("div");
-        mini.className = "miniColor";
-        mini.style.background = color;
-        nextPieceEl.appendChild(mini);
+        const block = document.createElement("div");
+        block.className = "piece-block";
+        block.style.background = color;
+        piecePreviewEl.appendChild(block);
       });
+    }
+
+    function handlePointerDown(e) {
+      if (gameOver || currentPiece.length === 0) return;
+      if (isDrawing) return;
+
+      const idx = parseInt(e.currentTarget.dataset.index, 10);
+      if (board[idx] !== null) return;
+
+      isDrawing = true;
+      activePointerId = e.pointerId;
+      currentPath = [];
+
+      startPathAt(idx);
+    }
+
+    function handlePointerEnter(e) {
+      if (!isDrawing) return;
+      if (e.pointerId !== activePointerId) return;
+
+      const idx = parseInt(e.currentTarget.dataset.index, 10);
+      extendPathTo(idx);
+    }
+
+    function handlePointerUp(e) {
+      if (!isDrawing) return;
+      if (e.pointerId !== activePointerId) return;
+
+      finishPath();
+      isDrawing = false;
+      activePointerId = null;
+    }
+
+    function startPathAt(index) {
+      if (board[index] !== null) return;
+
+      currentPath.push(index);
+      const cell = cells[index];
+      cell.classList.add("preview");
+      cell.style.background = currentPiece[0];
+    }
+
+    function extendPathTo(index) {
+      if (board[index] !== null) return;
+      if (currentPath.includes(index)) return; // no revisiting
+      if (currentPath.length >= currentPiece.length) return;
+
+      const lastIndex = currentPath[currentPath.length - 1];
+      const lastRow = Math.floor(lastIndex / size);
+      const lastCol = lastIndex % size;
+      const row = Math.floor(index / size);
+      const col = index % size;
+
+      const dr = Math.abs(row - lastRow);
+      const dc = Math.abs(col - lastCol);
+
+      // Only orthogonal moves (no diagonal)
+      if (dr + dc !== 1) return;
+
+      currentPath.push(index);
+      const cell = cells[index];
+      const colorIndex = currentPath.length - 1;
+      cell.classList.add("preview");
+      cell.style.background = currentPiece[colorIndex];
+    }
+
+    function finishPath() {
+      if (currentPath.length === currentPiece.length && currentPiece.length > 0) {
+        // Valid placement: commit all blocks in order
+        currentPath.forEach((idx, i) => {
+          board[idx] = currentPiece[i];
+          const cell = cells[idx];
+          cell.classList.remove("preview", "invalid");
+          cell.classList.add("filled", "just-placed");
+          cell.addEventListener("animationend", () => {
+            cell.classList.remove("just-placed");
+          }, { once: true });
+        });
+
+        currentPath = [];
+        currentPiece = [];
+        renderBoard();
+        resolveMatchesAndScore();
+      } else {
+        // Invalid: player did not use all colors → wiggle and fade, then revert
+        showInvalidPlacement();
+      }
+    }
+
+    function showInvalidPlacement() {
+      currentPath.forEach(idx => {
+        const cell = cells[idx];
+        cell.classList.add("invalid");
+      });
+
+      setTimeout(() => {
+        currentPath.forEach(idx => {
+          const cell = cells[idx];
+          cell.classList.remove("invalid", "preview");
+        });
+        currentPath = [];
+        renderBoard();
+      }, 320);
     }
 
     function renderBoard() {
       for (let i = 0; i < board.length; i++) {
-        const cell = cells[i];
         const color = board[i];
+        const cell = cells[i];
 
         if (color === null) {
           cell.style.background = "#dcdcdc";
@@ -334,142 +537,7 @@
       }
     }
 
-    // =========================
-    // SWIPE / PLACEMENT LOGIC
-    // =========================
-
-    function getCellIndexFromEvent(ev) {
-      const target = ev.target.closest(".cell");
-      if (!target) return null;
-      return parseInt(target.dataset.index, 10);
-    }
-
-    function areNeighbors(a, b) {
-      const ar = Math.floor(a / size);
-      const ac = a % size;
-      const br = Math.floor(b / size);
-      const bc = b % size;
-      const dr = Math.abs(ar - br);
-      const dc = Math.abs(ac - bc);
-      // No diagonals, must share an edge
-      return (dr + dc === 1);
-    }
-
-    function onPointerDown(ev) {
-      if (gameOver || currentPiece.length === 0) return;
-
-      const index = getCellIndexFromEvent(ev);
-      if (index === null) return;
-      if (board[index] !== null) return; // must start on empty
-
-      dragging = true;
-      dragPath = [index];
-
-      // Place first colour of current piece
-      placeColorAtIndex(index, currentPiece[0]);
-
-      ev.preventDefault();
-    }
-
-    function onPointerMove(ev) {
-      if (!dragging || gameOver) return;
-
-      const index = getCellIndexFromEvent(ev);
-      if (index === null) return;
-
-      const lastIndex = dragPath[dragPath.length - 1];
-
-      // Only extend path if:
-      // - we haven't used this index yet
-      // - it's a neighbour of the last
-      // - board is empty at that index
-      // - we still have colours left in the piece
-      if (
-        index !== lastIndex &&
-        dragPath.indexOf(index) === -1 &&
-        areNeighbors(lastIndex, index) &&
-        board[index] === null &&
-        dragPath.length < currentPiece.length
-      ) {
-        dragPath.push(index);
-        const colorToPlace = currentPiece[dragPath.length - 1]; // order matters
-        placeColorAtIndex(index, colorToPlace);
-      }
-
-      ev.preventDefault();
-    }
-
-    function onPointerUp(ev) {
-      if (!dragging) return;
-      dragging = false;
-
-      // After placing at least one tile, resolve matches
-      if (dragPath.length > 0) {
-        resolveMatchesAndScore();
-        // New piece for next round
-        createNewPiece();
-        checkGameOver();
-      }
-
-      dragPath = [];
-    }
-
-    function placeColorAtIndex(index, color) {
-      board[index] = color;
-      const cell = cells[index];
-      cell.style.background = color;
-      cell.classList.add("filled");
-    }
-
-    // =========================
-    // MATCHING & SCORING (NxN)
-    // =========================
-
-    function resolveMatchesAndScore() {
-      const groups = findMatchingGroups();
-      if (groups.length === 0) {
-        renderBoard();
-        return;
-      }
-
-      // Determine all indices to remove and N = total removed
-      const toRemoveSet = new Set();
-      groups.forEach(group => {
-        group.forEach(i => toRemoveSet.add(i));
-      });
-
-      const removedIndices = Array.from(toRemoveSet);
-      const N = removedIndices.length;
-
-      if (N === 0) return;
-
-      // Score = N * N
-      const pointsThisTurn = N * N;
-      score += pointsThisTurn;
-      scoreEl.textContent = score.toString();
-
-      // Show +N on each removed cell and then clear them
-      removedIndices.forEach(i => {
-        const cell = cells[i];
-        // Score pop label
-        const label = document.createElement("div");
-        label.className = "score-pop";
-        label.textContent = "+" + N;
-        cell.appendChild(label);
-      });
-
-      // After short delay, remove blocks
-      setTimeout(() => {
-        removedIndices.forEach(i => {
-          board[i] = null;
-          const cell = cells[i];
-          cell.innerHTML = ""; // remove labels
-        });
-        renderBoard();
-      }, 550);
-    }
-
-    // Find all groups of size ≥ 3 with same colour (4-directionally connected)
+    // Find all groups of size >=3 of same colour (4-directionally connected)
     function findMatchingGroups() {
       const visited = Array(board.length).fill(false);
       const groups = [];
@@ -493,14 +561,14 @@
           while (stack.length > 0) {
             const cur = stack.pop();
             component.push(cur);
-            const cr = Math.floor(cur / size);
-            const cc = cur % size;
+            const curRow = Math.floor(cur / size);
+            const curCol = cur % size;
 
             const neighbors = [
-              [cr - 1, cc],
-              [cr + 1, cc],
-              [cr, cc - 1],
-              [cr, cc + 1]
+              [curRow - 1, curCol],
+              [curRow + 1, curCol],
+              [curRow, curCol - 1],
+              [curRow, curCol + 1],
             ];
 
             neighbors.forEach(([nr, nc]) => {
@@ -523,27 +591,89 @@
       return groups;
     }
 
-    // =========================
-    // GAME OVER
-    // =========================
-
-    function checkGameOver() {
-      const hasEmpty = board.some(cell => cell === null);
-      if (!hasEmpty) {
-        gameOver = true;
-        messageEl.textContent = "Keine Züge mehr! 🎁";
-        if (navigator.vibrate) navigator.vibrate(120);
-        cells.forEach(c => c.classList.add("disabled"));
+    function resolveMatchesAndScore() {
+      const groups = findMatchingGroups();
+      if (groups.length === 0) {
+        // No matches; just continue with next piece or end if full
+        if (countEmptyCells() === 0) {
+          triggerGameOver();
+        } else {
+          generateNewPiece();
+        }
+        return;
       }
+
+      // N = total blocks in all groups
+      const allIndices = new Set();
+      groups.forEach(group => {
+        group.forEach(idx => allIndices.add(idx));
+      });
+
+      const N = allIndices.size;
+      const scoreIncrease = N * N;
+
+      // Show +N on each disappearing block, animate them, then remove
+      allIndices.forEach(idx => {
+        const cell = cells[idx];
+
+        const bubble = document.createElement("div");
+        bubble.className = "score-bubble";
+        bubble.textContent = "+" + N;
+        cell.appendChild(bubble);
+
+        bubble.addEventListener("animationend", () => {
+          bubble.remove();
+        }, { once: true });
+      });
+
+      // After a short delay, clear the blocks and update score
+      setTimeout(() => {
+        allIndices.forEach(idx => {
+          board[idx] = null;
+        });
+        score += scoreIncrease;
+        scoreEl.textContent = score.toString();
+        renderBoard();
+
+        if (navigator.vibrate) navigator.vibrate(80);
+
+        if (countEmptyCells() === 0) {
+          triggerGameOver();
+        } else {
+          generateNewPiece();
+        }
+      }, 260);
+    }
+
+    function triggerGameOver() {
+      if (gameOver) return;
+      gameOver = true;
+
+      // Dance animation for all filled blocks
+      cells.forEach((cell, idx) => {
+        if (board[idx] !== null) {
+          cell.classList.add("dance");
+          const delay = (idx * 0.07).toFixed(2) + "s";
+          cell.style.setProperty("--dance-delay", delay);
+        }
+        cell.classList.add("disabled");
+      });
+
+      messageEl.innerHTML = `
+        <div class="win-title">Congrats!! Dein Highscore ist ${score}</div>
+        <div class="win-sub">Tippe auf "Neu starten" für eine neue Runde 🎄</div>
+      `;
+
+      if (navigator.vibrate) navigator.vibrate([100, 80, 100]);
     }
 
     restartBtn.addEventListener("click", () => {
-      // Remove listeners to avoid duplicates
-      boardEl.replaceWith(boardEl.cloneNode(true));
-      const newBoardEl = document.getElementById("board");
-      boardEl.id = ""; // old reference not used further
-      // Re-init everything
-      location.reload(); // simplest hard reset for this small game
+      // clear dance classes before restarting
+      cells.forEach(cell => {
+        cell.classList.remove("dance", "disabled");
+        cell.style.removeProperty("--dance-delay");
+      });
+      initGame();
     });
 
     // Start game
@@ -551,4 +681,3 @@
   </script>
 </body>
 </html>
-
