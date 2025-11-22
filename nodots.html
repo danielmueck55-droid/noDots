@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>No Dots – Mini Advent Game</title>
+
+  <!-- Festive Calligraphy Font (like your puzzle app) -->
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: linear-gradient(#f8f8f8, #d8e3f0);
+      background-image:
+        url('data:image/svg+xml,%3Csvg width="100" height="100" xmlns="http://www.w3.org/2000/svg"%3E%3Ctext x="10" y="55" font-size="20" fill="%23e0e0e0"%3E✻%3C/text%3E%3C/svg%3E'),
+        url('data:image/svg+xml,%3Csvg width="120" height="120" xmlns="http://www.w3.org/2000/svg"%3E%3Ctext x="15" y="65" font-size="22" fill="%23f2d4d4"%3E✦%3C/text%3E%3C/svg%3E');
+      background-repeat: repeat;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 3rem;
+      color: #b30000;
+      margin: 0;
+      text-shadow: 0 0 4px rgba(255,255,255,0.7);
+    }
+
+    h2 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 2rem;
+      color: #b30000;
+      margin: 0;
+      text-shadow: 0 0 4px rgba(255,255,255,0.7);
+    }
+
+    /* Snowflakes (like your other game) */
+    .snowflake {
+      position: fixed;
+      top: -10px;
+      color: white;
+      font-size: 20px;
+      opacity: 0.75;
+      animation: fall linear infinite;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    @keyframes fall {
+      to { transform: translateY(110vh); }
+    }
+
+    /* Info bar */
+    #infoBar {
+      margin-top: 15px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-size: 16px;
+    }
+
+    .miniLabel {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.95);
+      padding: 6px 12px;
+      border-radius: 10px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.15);
+    }
+
+    .miniLabel-title {
+      font-weight: 600;
+      color: #555;
+    }
+
+    #nextColorDisplay {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid rgba(0,0,0,0.15);
+      background: #ccc;
+    }
+
+    /* Game frame */
+    #frame {
+      padding: 16px;
+      border: 8px solid #b30000;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.8);
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 95vw;
+    }
+
+    /* 5x5 board */
+    #board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      width: min(90vw, 320px);
+      height: min(90vw, 320px);
+      touch-action: manipulation;
+    }
+
+    .cell {
+      border-radius: 12px;
+      background: #dcdcdc; /* empty cell */
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8),
+                  0 1px 2px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.18s ease, transform 0.08s ease;
+      cursor: pointer;
+    }
+
+    .cell.filled {
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.85),
+        0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .cell:active {
+      transform: scale(0.96);
+    }
+
+    .cell.disabled {
+      cursor: default;
+      opacity: 0.6;
+    }
+
+    /* Game over / message */
+    #message {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 16px;
+      color: #444;
+      min-height: 1.5em;
+    }
+
+    #restartBtn {
+      margin-top: 10px;
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: none;
+      background: #b30000;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+      transition: background 0.2s ease, transform 0.08s ease;
+    }
+    #restartBtn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+    #restartBtn:hover {
+      background: #d00000;
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 2.3rem; }
+      h2 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Felice Adventskalender</h1>
+  <h2>No Dots Mini-Spiel 🎄</h2>
+
+  <div id="infoBar">
+    <div class="miniLabel">
+      <span class="miniLabel-title">Punkte:</span>
+      <span id="score">0</span>
+    </div>
+
+    <div class="miniLabel">
+      <span class="miniLabel-title">Nächste Farbe:</span>
+      <div id="nextColorDisplay"></div>
+    </div>
+  </div>
+
+  <div id="frame">
+    <div id="board"></div>
+    <div id="message"></div>
+    <button id="restartBtn">Neu starten</button>
+  </div>
+
+  <!-- Snowflakes -->
+  <script>
+    for (let i = 0; i < 20; i++) {
+      const f = document.createElement('div');
+      f.className = 'snowflake';
+      f.textContent = '❅';
+      f.style.left = Math.random() * 100 + 'vw';
+      f.style.animationDuration = 5 + Math.random() * 5 + 's';
+      f.style.animationDelay = Math.random() * 5 + 's';
+      document.body.appendChild(f);
+    }
+  </script>
+
+  <script>
+    // =========================
+    // GAME LOGIC
+    // =========================
+
+    const size = 5;            // 5x5 board
+    const boardEl = document.getElementById("board");
+    const scoreEl = document.getElementById("score");
+    const nextColorEl = document.getElementById("nextColorDisplay");
+    const messageEl = document.getElementById("message");
+    const restartBtn = document.getElementById("restartBtn");
+
+    // Nice, bright colours
+    const COLORS = [
+      "#e74c3c", // red
+      "#f1c40f", // yellow
+      "#2ecc71", // green
+      "#3498db", // blue
+      "#9b59b6"  // purple
+    ];
+
+    let cells = [];
+    let board = [];
+    let nextColor = null;
+    let score = 0;
+    let gameOver = false;
+
+    function initGame() {
+      board = Array(size * size).fill(null);
+      cells = [];
+      boardEl.innerHTML = "";
+      score = 0;
+      scoreEl.textContent = "0";
+      messageEl.textContent = "";
+      gameOver = false;
+
+      // Build board
+      for (let i = 0; i < size * size; i++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.dataset.index = i;
+        cell.addEventListener("click", handleCellClick);
+        boardEl.appendChild(cell);
+        cells.push(cell);
+      }
+
+      // Choose initial next color
+      nextColor = randomColor();
+      updateNextColorDisplay();
+      renderBoard();
+    }
+
+    function randomColor() {
+      const idx = Math.floor(Math.random() * COLORS.length);
+      return COLORS[idx];
+    }
+
+    function updateNextColorDisplay() {
+      nextColorEl.style.background = nextColor || "#ccc";
+    }
+
+    function handleCellClick(e) {
+      if (gameOver) return;
+
+      const index = parseInt(e.currentTarget.dataset.index, 10);
+
+      // Only place on empty cell
+      if (board[index] !== null) return;
+
+      // Place the next color
+      board[index] = nextColor;
+
+      // After placing, choose the new "next" colour
+      nextColor = randomColor();
+      updateNextColorDisplay();
+
+      // Check for groups of 3+ same-color tiles
+      const groups = findMatchingGroups();
+
+      let removedCount = 0;
+      if (groups.length > 0) {
+        // Remove the tiles from all groups
+        groups.forEach(group => {
+          group.forEach(i => {
+            if (board[i] !== null) {
+              board[i] = null;
+              removedCount++;
+            }
+          });
+        });
+
+        // Score: each removed tile = 5 points
+        if (removedCount > 0) {
+          score += removedCount * 5;
+          scoreEl.textContent = score.toString();
+        }
+      }
+
+      renderBoard();
+
+      // Check for end of game: if no empty cells left
+      if (board.every(cell => cell !== null)) {
+        gameOver = true;
+        messageEl.textContent = "Keine Züge mehr! 🎁";
+        // Optional: vibrate on game over
+        if (navigator.vibrate) navigator.vibrate(120);
+        disableBoard();
+      }
+    }
+
+    function disableBoard() {
+      cells.forEach(c => c.classList.add("disabled"));
+    }
+
+    function renderBoard() {
+      for (let i = 0; i < board.length; i++) {
+        const color = board[i];
+        const cell = cells[i];
+
+        if (color === null) {
+          cell.style.background = "#dcdcdc";
+          cell.classList.remove("filled");
+        } else {
+          cell.style.background = color;
+          cell.classList.add("filled");
+        }
+      }
+    }
+
+    // Find all groups of size >= 3 of the same colour (4-directionally connected)
+    function findMatchingGroups() {
+      const visited = Array(board.length).fill(false);
+      const groups = [];
+
+      const inBounds = (row, col) =>
+        row >= 0 && row < size && col >= 0 && col < size;
+
+      const index = (row, col) => row * size + col;
+
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          const startIdx = index(r, c);
+          if (visited[startIdx]) continue;
+          const color = board[startIdx];
+          if (color === null) continue;
+
+          // BFS/DFS for this colour
+          const stack = [startIdx];
+          const component = [];
+          visited[startIdx] = true;
+
+          while (stack.length > 0) {
+            const cur = stack.pop();
+            component.push(cur);
+            const curRow = Math.floor(cur / size);
+            const curCol = cur % size;
+
+            const neighbors = [
+              [curRow - 1, curCol],
+              [curRow + 1, curCol],
+              [curRow, curCol - 1],
+              [curRow, curCol + 1],
+            ];
+
+            neighbors.forEach(([nr, nc]) => {
+              if (!inBounds(nr, nc)) return;
+              const ni = index(nr, nc);
+              if (visited[ni]) return;
+              if (board[ni] === color) {
+                visited[ni] = true;
+                stack.push(ni);
+              }
+            });
+          }
+
+          if (component.length >= 3) {
+            groups.push(component);
+          }
+        }
+      }
+
+      return groups;
+    }
+
+    restartBtn.addEventListener("click", initGame);
+
+    // Start
+    initGame();
+  </script>
+</body>
+</html>
