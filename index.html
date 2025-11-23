@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>No Dots – Advent Game</title>
+  <title>No Dots – Advent Mini-Game</title>
 
+  <!-- Festive Font similar to your puzzle -->
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 
   <style>
@@ -34,6 +35,7 @@
       color: #b30000;
       margin: 0;
       text-shadow: 0 0 4px rgba(255,255,255,0.7);
+      text-align: center;
     }
 
     h2 {
@@ -42,13 +44,10 @@
       color: #b30000;
       margin: 0;
       text-shadow: 0 0 4px rgba(255,255,255,0.7);
+      text-align: center;
     }
 
-    @media (max-width: 480px) {
-      h1 { font-size: 2.4rem; }
-      h2 { font-size: 1.9rem; }
-    }
-
+    /* Snowflakes */
     .snowflake {
       position: fixed;
       top: -10px;
@@ -63,14 +62,21 @@
       to { transform: translateY(110vh); }
     }
 
-    /* Top bar */
+    /* Info bar */
     #topBar {
-      margin-top: 12px;
+      margin-top: 15px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
+      gap: 8px;
+    }
+
+    #infoRow {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .miniLabel {
@@ -79,9 +85,9 @@
       gap: 6px;
       background: rgba(255,255,255,0.95);
       padding: 6px 12px;
-      border-radius: 999px;
+      border-radius: 10px;
       box-shadow: 0 0 6px rgba(0,0,0,0.15);
-      font-size: 15px;
+      font-size: 14px;
     }
 
     .miniLabel-title {
@@ -89,161 +95,182 @@
       color: #555;
     }
 
-    #nextColorsContainer {
+    #roundColors {
       display: flex;
       gap: 4px;
     }
 
-    .nextColorBox {
-      width: 18px;
-      height: 18px;
+    .roundColorBox {
+      width: 22px;
+      height: 22px;
       border-radius: 6px;
-      border: 1px solid rgba(0,0,0,0.15);
-      background: #ccc;
+      border: 2px solid rgba(0,0,0,0.18);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.18);
+      opacity: 0.8;
+      transform: scale(0.9);
+      transition: transform 0.12s ease, opacity 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .roundColorBox.active {
+      opacity: 1;
+      transform: scale(1.1);
+      box-shadow: 0 0 8px rgba(255,255,255,0.9), 0 0 8px rgba(0,0,0,0.3);
     }
 
     #tutorialBtn {
-      padding: 6px 12px;
+      padding: 6px 14px;
       border-radius: 999px;
       border: none;
-      background: #00897b;
-      color: white;
-      font-size: 14px;
       cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+      font-size: 14px;
+      background: #ffffffdd;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
+
+    #tutorialBtn span {
+      font-size: 16px;
+    }
+
     #tutorialBtn:active {
       transform: translateY(1px) scale(0.98);
     }
 
-    /* Game frame & board */
+    /* Game frame */
     #frame {
       padding: 16px;
       border: 8px solid #b30000;
       border-radius: 20px;
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.88);
       box-shadow: 0 0 15px rgba(0,0,0,0.2);
-      margin-top: 16px;
+      margin-top: 18px;
       display: flex;
       flex-direction: column;
       align-items: center;
       max-width: 95vw;
-      position: relative;
     }
 
+    /* Board */
     #board {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 6px;
       width: min(90vw, 320px);
       height: min(90vw, 320px);
-      touch-action: none; /* important for mobile swipes */
+      touch-action: none; /* important for mobile swiping */
     }
 
     .cell {
+      position: relative;
       border-radius: 12px;
-      background: #dcdcdc;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8),
-                  0 1px 2px rgba(0,0,0,0.2);
+      background: #dcdcdc; /* empty */
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.85),
+        0 1px 2px rgba(0,0,0,0.2);
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
-      transition: background 0.15s ease, transform 0.08s ease, opacity 0.2s ease;
       cursor: pointer;
+      overflow: hidden;
+      transition:
+        background 0.18s ease,
+        transform 0.08s ease,
+        box-shadow 0.12s ease,
+        opacity 0.2s ease;
     }
 
     .cell.filled {
       box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,0.85),
-        0 2px 4px rgba(0,0,0,0.3);
+        inset 0 0 0 1px rgba(255,255,255,0.9),
+        0 2px 5px rgba(0,0,0,0.35);
     }
 
-    .cell:active {
-      transform: scale(0.96);
+    .cell.preview {
+      outline: 2px dashed rgba(255,255,255,0.9);
+      box-shadow: 0 0 6px rgba(0,0,0,0.45);
+    }
+
+    .cell.placed {
+      animation: popIn 0.18s ease-out;
+    }
+
+    @keyframes popIn {
+      0%   { transform: scale(0.2); opacity: 0; }
+      70%  { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1.0); }
+    }
+
+    .cell.error {
+      animation: wiggle 0.35s ease;
+    }
+
+    @keyframes wiggle {
+      0%   { transform: translateX(0); opacity: 1; }
+      20%  { transform: translateX(-4px); }
+      40%  { transform: translateX(4px); }
+      60%  { transform: translateX(-3px); }
+      80%  { transform: translateX(3px); }
+      100% { transform: translateX(0); opacity: 0; }
+    }
+
+    .cell.dance {
+      animation: dance 0.8s var(--delay, 0s) ease-in-out infinite alternate;
+    }
+
+    @keyframes dance {
+      0%   { transform: translateY(0) scale(1) rotate(0deg); }
+      40%  { transform: translateY(-6px) scale(1.06) rotate(-3deg); }
+      70%  { transform: translateY(2px) scale(0.98) rotate(3deg); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    .score-popup {
+      position: absolute;
+      font-size: 13px;
+      color: #fff;
+      text-shadow: 0 0 4px rgba(0,0,0,0.7);
+      animation: floatUp 0.5s ease-out forwards;
+      pointer-events: none;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes floatUp {
+      0%   { transform: translate(-50%, -50%); opacity: 1; }
+      100% { transform: translate(-50%, -100%); opacity: 0; }
     }
 
     .cell.disabled {
       cursor: default;
-      opacity: 0.6;
     }
 
-    .cell.placedThisTurn {
-      animation: popIn 0.2s ease-out;
-    }
-
-    @keyframes popIn {
-      from { transform: scale(0.6); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    .cell.clearing {
-      animation: flyUp 0.35s ease-out forwards;
-    }
-
-    @keyframes flyUp {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-18px); opacity: 0; }
-    }
-
-    .cell.errorCell {
-      animation: wiggle 0.35s ease, fadeOutErr 0.35s ease forwards;
-    }
-
-    @keyframes wiggle {
-      0% { transform: translateX(0); }
-      20% { transform: translateX(-4px); }
-      40% { transform: translateX(4px); }
-      60% { transform: translateX(-3px); }
-      80% { transform: translateX(3px); }
-      100% { transform: translateX(0); }
-    }
-
-    @keyframes fadeOutErr {
-      from { opacity: 1; }
-      to { opacity: 0.3; }
-    }
-
-    .score-float {
-      position: absolute;
-      font-size: 14px;
-      font-weight: 700;
-      color: #fff;
-      text-shadow: 0 0 4px rgba(0,0,0,0.7);
-      animation: floatScore 0.6s ease-out forwards;
-    }
-
-    @keyframes floatScore {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-18px); opacity: 0; }
-    }
-
-    /* Game over message */
-    #topMessage {
+    #message {
       margin-top: 10px;
-      min-height: 1.8em;
-      text-align: center;
+      min-height: 1.6em;
       font-size: 15px;
       color: #444;
+      text-align: center;
     }
 
-    #finalMessage {
-      margin-top: 10px;
-      font-size: 1.1rem;
+    #endMessage {
+      margin-top: 16px;
+      background: linear-gradient(120deg, #b30000, #d4af37, #008000);
+      padding: 10px 16px;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 16px;
       font-weight: 600;
       text-align: center;
-      background: linear-gradient(45deg, #b30000, #d4af37, #008000);
-      -webkit-background-clip: text;
-      color: transparent;
-      text-shadow: 0 0 6px rgba(255,255,255,0.8);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.28);
       display: none;
-      animation: finalPop 0.7s ease-out;
     }
 
-    @keyframes finalPop {
-      0% { transform: scale(0.7); opacity: 0; }
-      60% { transform: scale(1.1); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
+    #endMessage span.score {
+      font-size: 18px;
+      font-weight: 700;
     }
 
     #restartBtn {
@@ -256,37 +283,20 @@
       font-size: 15px;
       cursor: pointer;
       box-shadow: 0 3px 8px rgba(0,0,0,0.25);
-    }
-    #restartBtn:active {
-      transform: translateY(1px) scale(0.98);
+      transition: background 0.2s ease, transform 0.08s ease;
     }
     #restartBtn:hover {
       background: #d00000;
     }
-
-    /* Dancing blocks for game over */
-    .cell.dance1 { animation: dance1 0.7s ease-in-out infinite; }
-    .cell.dance2 { animation: dance2 0.7s ease-in-out infinite; }
-    .cell.dance3 { animation: dance3 0.7s ease-in-out infinite; }
-
-    @keyframes dance1 {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-4px) scale(1.05); }
-    }
-    @keyframes dance2 {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-3px) rotate(-4deg); }
-    }
-    @keyframes dance3 {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-3px) rotate(4deg); }
+    #restartBtn:active {
+      transform: translateY(1px) scale(0.98);
     }
 
     /* Tutorial overlay */
     #tutorialOverlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.6);
       display: none;
       align-items: center;
       justify-content: center;
@@ -294,127 +304,133 @@
     }
 
     #tutorialCard {
-      background: #ffffff;
+      background: #ffffffee;
       border-radius: 18px;
-      padding: 18px 16px 16px;
-      max-width: 320px;
-      width: 90vw;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-      text-align: center;
-      position: relative;
-      overflow: hidden;
+      padding: 18px 20px;
+      max-width: 90vw;
+      width: 340px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    #tutorialTitle {
-      font-family: 'Great Vibes', cursive;
-      font-size: 2rem;
+    #tutorialCard h3 {
+      margin: 0;
+      font-size: 18px;
       color: #b30000;
-      margin-bottom: 4px;
     }
 
-    #tutorialText {
+    #tutorialCard p {
+      margin: 0;
       font-size: 14px;
-      color: #555;
-      min-height: 2.4em;
+      color: #333;
+    }
+
+    #tutorialSteps {
+      font-size: 13px;
+      color: #777;
     }
 
     #tutorialMiniBoard {
-      margin: 10px auto 8px;
-      width: 150px;
-      height: 150px;
+      margin-top: 8px;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
+      grid-template-columns: repeat(3, 14px);
+      gap: 3px;
+      justify-content: center;
     }
 
-    .miniCell {
-      border-radius: 10px;
+    .tutorialCell {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
       background: #e0e0e0;
-      position: relative;
-      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8);
     }
 
-    .miniDot {
-      position: absolute;
-      inset: 3px;
-      border-radius: 8px;
-      opacity: 0;
-    }
-
-    .miniDot.show {
-      animation: miniPop 0.5s ease-out forwards;
-    }
-
-    @keyframes miniPop {
-      0% { transform: scale(0.4); opacity: 0; }
-      60% { transform: scale(1.1); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    #tutorialControls {
+    #tutorialButtons {
       display: flex;
       justify-content: space-between;
-      margin-top: 8px;
+      margin-top: 10px;
+      gap: 8px;
+    }
+
+    .btnSecondary, .btnPrimary {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
       font-size: 14px;
     }
 
-    .tutorialBtn {
-      border-radius: 999px;
-      border: none;
-      padding: 6px 10px;
-      font-size: 13px;
-      cursor: pointer;
-      background: #b30000;
-      color: white;
+    .btnSecondary {
+      background: #eee;
     }
 
-    .tutorialBtn.secondary {
-      background: #ddd;
-      color: #333;
+    .btnPrimary {
+      background: #b30000;
+      color: #fff;
+    }
+
+    .btnPrimary:active,
+    .btnSecondary:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 2.4rem; }
+      h2 { font-size: 1.8rem; }
     }
   </style>
 </head>
 <body>
 
   <h1>Felice Adventskalender</h1>
-  <h2>No Dots Advent Spiel 🎄</h2>
+  <h2>Türchen 8 🎄</h2>
 
   <div id="topBar">
-    <div class="miniLabel">
-      <span class="miniLabel-title">Punkte:</span>
-      <span id="score">0</span>
+    <div id="infoRow">
+      <div class="miniLabel">
+        <span class="miniLabel-title">Punkte:</span>
+        <span id="score">0</span>
+      </div>
+      <div class="miniLabel">
+        <span class="miniLabel-title">Diese Runde:</span>
+        <div id="roundColors"></div>
+      </div>
     </div>
+    <button id="tutorialBtn">
+      <span>❓</span> Tutorial
+    </button>
+  </div>
 
-    <div class="miniLabel">
-      <span class="miniLabel-title">Nächste Runde:</span>
-      <div id="nextColorsContainer"></div>
-    </div>
-
-    <button id="tutorialBtn">Tutorial</button>
+  <div id="endMessage">
+    🎉 Congrats!! Dein Highscore ist <span class="score">0</span> ✨
   </div>
 
   <div id="frame">
     <div id="board"></div>
-    <div id="topMessage"></div>
-    <div id="finalMessage"></div>
+    <div id="message"></div>
     <button id="restartBtn">Neu starten</button>
   </div>
 
   <!-- Tutorial Overlay -->
   <div id="tutorialOverlay">
     <div id="tutorialCard">
-      <div id="tutorialTitle">Wie es geht 🎁</div>
+      <h3>No Dots – Wie geht das?</h3>
+      <p id="tutorialText"></p>
+      <div id="tutorialSteps"></div>
       <div id="tutorialMiniBoard"></div>
-      <div id="tutorialText"></div>
-      <div id="tutorialControls">
-        <button class="tutorialBtn secondary" id="tutorialCloseBtn">Schließen</button>
-        <button class="tutorialBtn" id="tutorialNextBtn">Weiter</button>
+      <div id="tutorialButtons">
+        <button class="btnSecondary" id="tutorialClose">Schließen</button>
+        <button class="btnPrimary" id="tutorialNext">Weiter</button>
       </div>
     </div>
   </div>
 
+  <!-- Snowflakes -->
   <script>
-    // Snowflakes
     for (let i = 0; i < 20; i++) {
       const f = document.createElement('div');
       f.className = 'snowflake';
@@ -428,271 +444,425 @@
 
   <script>
     // =========================
-    // GAME STATE & CONSTANTS
+    // AUDIO (simple Web Audio beeps)
     // =========================
-    const size = 5; // 5x5 board
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) audioCtx = new AC();
+      }
+      return audioCtx;
+    }
+
+    function playTone(freq, duration, type = 'sine', volume = 0.18) {
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.value = volume;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const now = ctx.currentTime;
+      osc.start(now);
+      gain.gain.setValueAtTime(volume, now);
+      gain.gain.linearRampToValueAtTime(0, now + duration);
+      osc.stop(now + duration);
+    }
+
+    function playPlaceSound() {
+      playTone(650, 0.08, 'square', 0.12);
+    }
+
+    function playScoreSound() {
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const base = ctx.currentTime;
+      [0, 0.08, 0.16].forEach((offset, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = 550 + i * 220;
+        gain.gain.value = 0.16;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        const t = base + offset;
+        osc.start(t);
+        gain.gain.setValueAtTime(0.16, t);
+        gain.gain.linearRampToValueAtTime(0, t + 0.12);
+        osc.stop(t + 0.12);
+      });
+    }
+
+    function playErrorSound() {
+      playTone(220, 0.25, 'sawtooth', 0.16);
+    }
+
+    // =========================
+    // GAME LOGIC
+    // =========================
+
+    const size = 5;  // 5x5 board
+
     const boardEl = document.getElementById("board");
     const scoreEl = document.getElementById("score");
-    const topMessageEl = document.getElementById("topMessage");
-    const finalMessageEl = document.getElementById("finalMessage");
+    const roundColorsEl = document.getElementById("roundColors");
+    const messageEl = document.getElementById("message");
     const restartBtn = document.getElementById("restartBtn");
-    const nextColorsContainer = document.getElementById("nextColorsContainer");
+    const endMessageEl = document.getElementById("endMessage");
+    const endMessageScoreEl = endMessageEl.querySelector(".score");
+
     const tutorialBtn = document.getElementById("tutorialBtn");
-
     const tutorialOverlay = document.getElementById("tutorialOverlay");
-    const tutorialMiniBoard = document.getElementById("tutorialMiniBoard");
     const tutorialText = document.getElementById("tutorialText");
-    const tutorialCloseBtn = document.getElementById("tutorialCloseBtn");
-    const tutorialNextBtn = document.getElementById("tutorialNextBtn");
+    const tutorialSteps = document.getElementById("tutorialSteps");
+    const tutorialClose = document.getElementById("tutorialClose");
+    const tutorialNext = document.getElementById("tutorialNext");
+    const tutorialMiniBoard = document.getElementById("tutorialMiniBoard");
 
-    // Colour palette (we'll unlock more with higher score)
-    const ALL_COLORS = [
+    const baseColors = [
       "#e74c3c", // red
       "#f1c40f", // yellow
       "#2ecc71", // green
       "#3498db", // blue
-      "#9b59b6"  // purple
+      "#9b59b6", // purple
+      "#e67e22", // orange
+      "#1abc9c"  // teal
     ];
 
-    let maxColorsAvailable = 3; // start simple, increase with score
+    let unlockedColors = 4; // start with 4
     let board = [];
     let cells = [];
     let score = 0;
     let gameOver = false;
 
-    let currentRoundColors = []; // e.g. [red, yellow, green]
-    let placingIndex = 0;        // which colour in this round we are placing
-    let placedIndicesThisRound = [];
+    let currentRoundColors = [];
+    let currentPath = [];
+    let isDrawing = false;
 
-    // Drag / swipe state
-    let isDragging = false;
+    let isResolvingMatch = false;
 
-    // Simple audio using Web Audio API
-    let audioCtx = null;
-    function initAudio() {
-      if (!audioCtx) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) audioCtx = new AudioContext();
+    const tutorialPages = [
+      {
+        text: "Lege bunte Blöcke aufs Feld, sodass mindestens 3 gleichfarbige zusammenhängen.",
+        hint: "Mehr Blöcke auf einmal = mehr Punkte (N×N)!"
+      },
+      {
+        text: "In jeder Runde bekommst du 1–4 Farben (oben). Wische über leere Felder, um GENAU so viele Felder zu belegen.",
+        hint: "Die Reihenfolge der Farben folgt deinem Wischpfad."
+      },
+      {
+        text: "Alle gelöschten Blöcke einer Runde zählen: N×N Punkte. Wenn keine Züge mehr möglich sind, endet das Spiel.",
+        hint: "Hol dir den höchsten Highscore! 🎄"
+      }
+    ];
+    let tutorialIndex = 0;
+    let tutorialCells = [];
+    let tutorialAnimTimeouts = [];
+
+    function buildTutorialMiniBoard() {
+      if (tutorialCells.length) return;
+      tutorialMiniBoard.innerHTML = "";
+      tutorialCells = [];
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement("div");
+        cell.className = "tutorialCell";
+        tutorialMiniBoard.appendChild(cell);
+        tutorialCells.push(cell);
       }
     }
 
-    function playBeep(freq, duration = 0.08) {
-      if (!audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.frequency.value = freq;
-      const now = audioCtx.currentTime;
-      gain.gain.setValueAtTime(0.18, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-      osc.start(now);
-      osc.stop(now + duration + 0.02);
+    function clearTutorialAnimation() {
+      tutorialAnimTimeouts.forEach(id => clearTimeout(id));
+      tutorialAnimTimeouts = [];
+      if (tutorialCells.length) {
+        tutorialCells.forEach(cell => {
+          cell.style.background = "#e0e0e0";
+        });
+      }
     }
 
-    function playPlaceSound() { playBeep(550, 0.06); }
-    function playMatchSound() { playBeep(320, 0.12); }
-    function playErrorSound() { playBeep(160, 0.12); }
+    function runTutorialAnimation(step) {
+      buildTutorialMiniBoard();
+      clearTutorialAnimation();
+      if (!tutorialCells.length) return;
 
-    // =========================
-    // INITIALIZATION
-    // =========================
+      if (step === 0) {
+        // Drei in einer Reihe werden gesetzt
+        const indices = [0, 1, 2];
+        indices.forEach((idx, i) => {
+          const t = setTimeout(() => {
+            tutorialCells[idx].style.background = "#e74c3c";
+          }, i * 250);
+          tutorialAnimTimeouts.push(t);
+        });
+      } else if (step === 1) {
+        // Pfad in Form eines L
+        const shape = [3, 4, 5, 8];
+        shape.forEach((idx, i) => {
+          const t = setTimeout(() => {
+            tutorialCells[idx].style.background = "#3498db";
+          }, i * 220);
+          tutorialAnimTimeouts.push(t);
+        });
+      } else if (step === 2) {
+        // Blöcke erscheinen und verschwinden
+        const indices = [1, 2, 4, 7];
+        indices.forEach((idx, i) => {
+          const t1 = setTimeout(() => {
+            tutorialCells[idx].style.background = "#2ecc71";
+          }, i * 200);
+          const t2 = setTimeout(() => {
+            tutorialCells[idx].style.background = "#e0e0e0";
+          }, i * 200 + 450);
+          tutorialAnimTimeouts.push(t1, t2);
+        });
+      }
+    }
+
+    function updateTutorial() {
+      const page = tutorialPages[tutorialIndex];
+      tutorialText.textContent = page.text;
+      tutorialSteps.textContent = `Schritt ${tutorialIndex + 1} von ${tutorialPages.length} – ${page.hint}`;
+      tutorialNext.textContent = tutorialIndex === tutorialPages.length - 1 ? "Los geht's!" : "Weiter";
+      runTutorialAnimation(tutorialIndex);
+    }
+
+    tutorialBtn.addEventListener("click", () => {
+      tutorialIndex = 0;
+      updateTutorial();
+      tutorialOverlay.style.display = "flex";
+    });
+
+    tutorialClose.addEventListener("click", () => {
+      tutorialOverlay.style.display = "none";
+      clearTutorialAnimation();
+    });
+
+    tutorialNext.addEventListener("click", () => {
+      if (tutorialIndex < tutorialPages.length - 1) {
+        tutorialIndex++;
+        updateTutorial();
+      } else {
+        tutorialOverlay.style.display = "none";
+        clearTutorialAnimation();
+      }
+    });
+
+    function availableColors() {
+      return baseColors.slice(0, unlockedColors);
+    }
+
     function initGame() {
-      gameOver = false;
+      board = Array(size * size).fill(null);
+      cells = [];
+      boardEl.innerHTML = "";
       score = 0;
       scoreEl.textContent = "0";
-      topMessageEl.textContent = "";
-      finalMessageEl.style.display = "none";
-      maxColorsAvailable = 3;
+      gameOver = false;
+      isDrawing = false;
+      isResolvingMatch = false;
+      currentRoundColors = [];
+      currentPath = [];
+      messageEl.textContent = "";
+      endMessageEl.style.display = "none";
+      unlockedColors = 4;
 
-      board = Array(size * size).fill(null);
-      boardEl.innerHTML = "";
-      cells = [];
-
+      // build board
       for (let i = 0; i < size * size; i++) {
         const cell = document.createElement("div");
         cell.className = "cell";
         cell.dataset.index = i;
+        cell.style.setProperty('--delay', '0s');
         boardEl.appendChild(cell);
         cells.push(cell);
       }
 
-      bindInputEvents();
-      nextRound();
+      generateNewRound();
+      renderBoard();
     }
 
-    // =========================
-    // ROUND / COLORS LOGIC
-    // =========================
-    function randomInt(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+    function generateNewRound() {
+      const emptyCount = board.filter(v => v === null).length;
+      if (emptyCount === 0) {
+        endGame();
+        return;
+      }
+      const maxLen = Math.min(4, emptyCount);
+      const len = Math.max(1, Math.floor(Math.random() * maxLen) + 1);
+      const cols = [];
+      const palette = availableColors();
+      for (let i = 0; i < len; i++) {
+        const c = palette[Math.floor(Math.random() * palette.length)];
+        cols.push(c);
+      }
+      currentRoundColors = cols;
+      currentPath = [];
+      renderRoundColors();
 
-    function updateMaxColorsFromScore() {
-      if (score >= 150) {
-        maxColorsAvailable = 5;
-      } else if (score >= 80) {
-        maxColorsAvailable = 4;
-      } else {
-        maxColorsAvailable = 3;
+      // Immediately check if this round is placeable at all
+      if (!canPlaceCurrentRound()) {
+        endGame();
       }
     }
 
-    function generateRoundColors() {
-      const count = randomInt(1, 4);
-      const used = new Set();
-      const colors = [];
-      const availablePalette = ALL_COLORS.slice(0, maxColorsAvailable);
-
-      while (colors.length < count && colors.length < availablePalette.length) {
-        const c = availablePalette[randomInt(0, availablePalette.length - 1)];
-        if (!used.has(c)) {
-          used.add(c);
-          colors.push(c);
-        }
-      }
-      return colors;
-    }
-
-    function showNextColors() {
-      nextColorsContainer.innerHTML = "";
-      currentRoundColors.forEach(c => {
+    function renderRoundColors() {
+      roundColorsEl.innerHTML = "";
+      currentRoundColors.forEach((c, idx) => {
         const box = document.createElement("div");
-        box.className = "nextColorBox";
+        box.className = "roundColorBox";
         box.style.background = c;
-        nextColorsContainer.appendChild(box);
+        if (idx === 0) box.classList.add("active");
+        roundColorsEl.appendChild(box);
       });
     }
 
-    function nextRound() {
-      updateMaxColorsFromScore();
-      currentRoundColors = generateRoundColors();
-      placingIndex = 0;
-      placedIndicesThisRound = [];
-      showNextColors();
+    function activateRoundColorIndex(idx) {
+      const boxes = roundColorsEl.querySelectorAll(".roundColorBox");
+      boxes.forEach((b, i) => {
+        if (i === idx) b.classList.add("active");
+        else b.classList.remove("active");
+      });
+    }
 
-      // Check if the new round is even possible (simple Option A: enough empty cells?)
-      const emptyCount = board.filter(v => v === null).length;
-      if (emptyCount < currentRoundColors.length) {
-        // Game over
-        finishGame();
+    function renderBoard() {
+      for (let i = 0; i < board.length; i++) {
+        const cell = cells[i];
+        const color = board[i];
+        cell.classList.remove("filled");
+        if (color === null) {
+          cell.style.background = "#dcdcdc";
+        } else {
+          cell.style.background = color;
+          cell.classList.add("filled");
+        }
       }
     }
 
-    // =========================
-    // INPUT HANDLING (MOUSE + TOUCH)
-    // =========================
-    function bindInputEvents() {
-      boardEl.addEventListener("mousedown", pointerDown);
-      boardEl.addEventListener("mousemove", pointerMove);
-      window.addEventListener("mouseup", pointerUp);
-
-      boardEl.addEventListener("touchstart", pointerDown, { passive: false });
-      boardEl.addEventListener("touchmove", pointerMove, { passive: false });
-      window.addEventListener("touchend", pointerUp);
-      window.addEventListener("touchcancel", pointerUp);
+    function indexToRC(idx) {
+      return { r: Math.floor(idx / size), c: idx % size };
     }
 
-    function getCellIndexFromEvent(e) {
-      let clientX, clientY;
+    function isNeighbor(a, b) {
+      const ra = Math.floor(a / size), ca = a % size;
+      const rb = Math.floor(b / size), cb = b % size;
+      return Math.abs(ra - rb) + Math.abs(ca - cb) === 1;
+    }
 
-      if (e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-      } else if (e.changedTouches && e.changedTouches.length > 0) {
-        clientX = e.changedTouches[0].clientX;
-        clientY = e.changedTouches[0].clientY;
-      } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
+    function handlePointerDown(idx, e) {
+      if (gameOver || isResolvingMatch) return;
+      if (board[idx] !== null) return;
+      if (currentRoundColors.length === 0) return;
+
+      isDrawing = true;
+      currentPath = [];
+      addToPath(idx);
+      if (e) e.preventDefault();
+    }
+
+    function addToPath(idx) {
+      if (currentPath.length >= currentRoundColors.length) return;
+      if (board[idx] !== null) return; // must be empty
+      if (currentPath.includes(idx)) return;
+
+      if (currentPath.length > 0) {
+        const last = currentPath[currentPath.length - 1];
+        if (!isNeighbor(last, idx)) return; // only 4-directional neighbors
       }
 
-      const target = document.elementFromPoint(clientX, clientY);
-      if (!target) return null;
-      const cell = target.closest(".cell");
-      if (!cell) return null;
-      return parseInt(cell.dataset.index, 10);
+      currentPath.push(idx);
+      const step = currentPath.length - 1;
+      const color = currentRoundColors[step];
+      const cell = cells[idx];
+      cell.classList.add("preview");
+      cell.style.background = color;
+      cell.classList.add("placed");
+      activateRoundColorIndex(step);
+      playPlaceSound();
+      setTimeout(() => cell.classList.remove("placed"), 200);
     }
 
-    function pointerDown(e) {
-      if (gameOver) return;
-      initAudio(); // first user interaction -> init audio
+    function clearPreview(errorAnimation = false) {
+      currentPath.forEach(idx => {
+        const cell = cells[idx];
+        if (errorAnimation) {
+          cell.classList.add("error");
+          setTimeout(() => {
+            cell.classList.remove("error");
+            cell.classList.remove("preview");
+            if (board[idx] === null) {
+              cell.style.background = "#dcdcdc";
+            } else {
+              cell.style.background = board[idx];
+            }
+          }, 350);
+        } else {
+          cell.classList.remove("preview");
+          if (board[idx] === null) {
+            cell.style.background = "#dcdcdc";
+          } else {
+            cell.style.background = board[idx];
+          }
+        }
+      });
+      if (!errorAnimation) {
+        currentPath = [];
+      }
+    }
 
-      if (e.cancelable) e.preventDefault();
+    function handlePointerMoveOver(idx, e) {
+      if (!isDrawing) return;
+      if (gameOver || isResolvingMatch) return;
+      addToPath(idx);
+      if (e) e.preventDefault();
+    }
 
-      const index = getCellIndexFromEvent(e);
-      if (index === null) return;
+    function handlePointerUp(e) {
+      if (!isDrawing) return;
+      isDrawing = false;
 
-      if (board[index] !== null) {
-        // can't start on a filled cell
+      if (currentPath.length === 0) return;
+
+      // Require using all colors
+      if (currentPath.length !== currentRoundColors.length) {
+        // error
+        messageEl.textContent = "Du musst alle Farben dieser Runde verwenden!";
+        clearPreview(true);
+        currentPath = [];
+        activateRoundColorIndex(0);
+        playErrorSound();
         return;
       }
 
-      isDragging = true;
-      placedIndicesThisRound = [];
-      placingIndex = 0;
+      // Commit placement
+      for (let i = 0; i < currentPath.length; i++) {
+        const idx = currentPath[i];
+        const color = currentRoundColors[i];
+        board[idx] = color;
+        const cell = cells[idx];
+        cell.classList.remove("preview");
+        cell.classList.add("filled");
+        cell.classList.add("placed");
+        setTimeout(() => cell.classList.remove("placed"), 250);
+      }
+      currentPath = [];
+      messageEl.textContent = "";
+      renderBoard();
 
-      addCellToCurrentPath(index);
-    }
-
-    function pointerMove(e) {
-      if (!isDragging || gameOver) return;
-      if (e.cancelable) e.preventDefault();
-
-      const index = getCellIndexFromEvent(e);
-      if (index === null) return;
-      addCellToCurrentPath(index);
-    }
-
-    function pointerUp(e) {
-      if (!isDragging) return;
-      isDragging = false;
-
-      // Did we place all colours?
-      if (placingIndex < currentRoundColors.length) {
-        // Error: not all used
-        handlePlacementError();
+      // Check matches
+      const groups = findMatchingGroups();
+      if (groups.length > 0) {
+        processGroups(groups);
       } else {
-        // Valid placement, resolve matches
-        resolveTurn();
+        // no match, just generate next round and check game over
+        updateUnlockedColors();
+        generateNewRound();
+        checkGameOver();
       }
     }
 
-    function areAdjacent(a, b) {
-      const r1 = Math.floor(a / size), c1 = a % size;
-      const r2 = Math.floor(b / size), c2 = b % size;
-      return (Math.abs(r1 - r2) + Math.abs(c1 - c2)) === 1;
-    }
-
-    function addCellToCurrentPath(index) {
-      if (placingIndex >= currentRoundColors.length) return; // already placed all
-      if (placedIndicesThisRound.includes(index)) return; // no revisiting
-      if (board[index] !== null) return; // can't place on filled
-
-      if (placedIndicesThisRound.length > 0) {
-        const last = placedIndicesThisRound[placedIndicesThisRound.length - 1];
-        if (!areAdjacent(last, index)) {
-          return; // ignore non-adjacent moves
-        }
-      }
-
-      // Place the next colour
-      const color = currentRoundColors[placingIndex];
-      board[index] = color;
-      placedIndicesThisRound.push(index);
-      placingIndex++;
-
-      const cell = cells[index];
-      cell.style.background = color;
-      cell.classList.add("filled", "placedThisTurn");
-      setTimeout(() => cell.classList.remove("placedThisTurn"), 250);
-
-      playPlaceSound();
-    }
-
-    // =========================
-    // MATCHING & SCORING
-    // =========================
     function findMatchingGroups() {
       const visited = Array(board.length).fill(false);
       const groups = [];
@@ -702,37 +872,35 @@
 
       for (let r = 0; r < size; r++) {
         for (let c = 0; c < size; c++) {
-          const startIndex = idx(r, c);
-          if (visited[startIndex]) continue;
-          const color = board[startIndex];
-          if (!color) continue;
+          const startI = idx(r, c);
+          if (visited[startI]) continue;
+          const color = board[startI];
+          if (color === null) continue;
 
-          const stack = [startIndex];
+          const stack = [startI];
           const component = [];
-          visited[startIndex] = true;
+          visited[startI] = true;
 
           while (stack.length > 0) {
             const cur = stack.pop();
             component.push(cur);
-            const cr = Math.floor(cur / size);
+            const rr = Math.floor(cur / size);
             const cc = cur % size;
-
-            const neighbours = [
-              [cr - 1, cc],
-              [cr + 1, cc],
-              [cr, cc - 1],
-              [cr, cc + 1]
+            const neighbors = [
+              [rr - 1, cc],
+              [rr + 1, cc],
+              [rr, cc - 1],
+              [rr, cc + 1]
             ];
-
-            for (const [nr, nc] of neighbours) {
-              if (!inBounds(nr, nc)) continue;
+            neighbors.forEach(([nr, nc]) => {
+              if (!inBounds(nr, nc)) return;
               const ni = idx(nr, nc);
-              if (visited[ni]) continue;
+              if (visited[ni]) return;
               if (board[ni] === color) {
                 visited[ni] = true;
                 stack.push(ni);
               }
-            }
+            });
           }
 
           if (component.length >= 3) {
@@ -740,195 +908,208 @@
           }
         }
       }
-
       return groups;
     }
 
-    function resolveTurn() {
-      const groups = findMatchingGroups();
-      if (groups.length === 0) {
-        // No combos, just next round
-        nextRound();
+    function processGroups(groups) {
+      isResolvingMatch = true;
+
+      const allIndicesSet = new Set();
+      groups.forEach(g => g.forEach(i => allIndicesSet.add(i)));
+      const indices = Array.from(allIndicesSet);
+      const N = indices.length;
+
+      if (N < 3) {
+        isResolvingMatch = false;
+        updateUnlockedColors();
+        generateNewRound();
+        checkGameOver();
         return;
       }
 
-      // Flatten and remove duplicates (just in case)
-      const indicesToClear = [...new Set(groups.flat())];
-      const N = indicesToClear.length;
-      const gained = N * N; // NxN scoring
+      const gain = N * N;
+      score += gain;
+      scoreEl.textContent = String(score);
+      messageEl.textContent = `Kombination! N = ${N}, Punkte: +${gain}`;
 
-      score += gained;
-      scoreEl.textContent = score.toString();
-      topMessageEl.textContent = `Kombination! ${N} Blöcke → +${gained} Punkte ✨`;
-      playMatchSound();
-
-      // Animate "+N" on each cleared block
-      indicesToClear.forEach(i => {
+      // Score popups & float-out animation
+      indices.forEach(i => {
         const cell = cells[i];
-        cell.classList.add("clearing");
-        const label = document.createElement("div");
-        label.className = "score-float";
-        label.textContent = `+${N}`;
-        label.style.left = "50%";
-        label.style.top = "50%";
-        label.style.transform = "translate(-50%, -50%)";
-        cell.appendChild(label);
+        const popup = document.createElement("div");
+        popup.className = "score-popup";
+        popup.textContent = `+${N}`;
+        cell.appendChild(popup);
+
+        cell.style.zIndex = "10";
+        setTimeout(() => {
+          popup.remove();
+          cell.style.zIndex = "";
+        }, 500);
       });
 
-      // After animation, clear them
-      setTimeout(() => {
-        indicesToClear.forEach(i => {
-          board[i] = null;
-          const cell = cells[i];
-          cell.classList.remove("clearing", "filled");
-          cell.style.background = "#dcdcdc";
-          while (cell.firstChild) cell.removeChild(cell.firstChild);
-        });
+      playScoreSound();
 
-        updateMaxColorsFromScore();
-        nextRound();
+      // Remove tiles after short delay
+      setTimeout(() => {
+        indices.forEach(i => {
+          board[i] = null;
+        });
+        renderBoard();
+        isResolvingMatch = false;
+        updateUnlockedColors();
+        generateNewRound();
+        checkGameOver();
       }, 420);
     }
 
-    function handlePlacementError() {
-      playErrorSound();
-      topMessageEl.textContent = "Du musst alle Farben verwenden!";
-
-      placedIndicesThisRound.forEach(i => {
-        const cell = cells[i];
-        cell.classList.add("errorCell");
-      });
-
-      setTimeout(() => {
-        // remove the tentative placements
-        placedIndicesThisRound.forEach(i => {
-          board[i] = null;
-          const cell = cells[i];
-          cell.classList.remove("errorCell", "filled");
-          cell.style.background = "#dcdcdc";
-        });
-        placedIndicesThisRound = [];
-        placingIndex = 0;
-        // Keep same colours for this round so they can try again
-      }, 380);
+    function updateUnlockedColors() {
+      let newUnlocked = 4;
+      if (score >= 80) newUnlocked = 5;
+      if (score >= 150) newUnlocked = 6;
+      if (score >= 200) newUnlocked = 7;
+      if (newUnlocked !== unlockedColors) {
+        unlockedColors = newUnlocked;
+        messageEl.textContent = "Neue Farbe freigeschaltet! 🎨";
+      }
     }
 
-    // =========================
-    // GAME OVER & DANCE
-    // =========================
-    function finishGame() {
+    // Check if the current round's colors can be placed (Option A: any path of required length on empty cells)
+    function canPlaceCurrentRound() {
+      const needed = currentRoundColors.length;
+      if (needed === 0) return false;
+
+      const empties = [];
+      for (let i = 0; i < board.length; i++) {
+        if (board[i] === null) empties.push(i);
+      }
+      if (empties.length < needed) return false;
+
+      const neighbors = (idx) => {
+        const res = [];
+        const r = Math.floor(idx / size);
+        const c = idx % size;
+        const poss = [
+          [r - 1, c],
+          [r + 1, c],
+          [r, c - 1],
+          [r, c + 1]
+        ];
+        poss.forEach(([nr, nc]) => {
+          if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+            const ni = nr * size + nc;
+            if (board[ni] === null) res.push(ni);
+          }
+        });
+        return res;
+      };
+
+      const visited = new Array(board.length).fill(false);
+
+      function dfs(pos, depth) {
+        if (depth === needed) return true;
+        const neigh = neighbors(pos);
+        for (const n of neigh) {
+          if (visited[n]) continue;
+          visited[n] = true;
+          if (dfs(n, depth + 1)) return true;
+          visited[n] = false;
+        }
+        return false;
+      }
+
+      for (const start of empties) {
+        visited.fill(false);
+        visited[start] = true;
+        if (needed === 1) return true;
+        if (dfs(start, 1)) return true;
+      }
+      return false;
+    }
+
+    function checkGameOver() {
+      if (gameOver) return;
+
+      // If there is no current round (e.g. after end), only check full board
+      if (currentRoundColors.length === 0) {
+        if (!board.some(v => v === null)) {
+          endGame();
+        }
+        return;
+      }
+
+      // If the current round cannot be placed anywhere, game over
+      if (!canPlaceCurrentRound()) {
+        endGame();
+      }
+    }
+
+    function endGame() {
+      if (gameOver) return;
       gameOver = true;
-      topMessageEl.textContent = "";
-      finalMessageEl.textContent = `Congrats!! Dein Highscore ist ${score} 🎄`;
-      finalMessageEl.style.display = "block";
+      isDrawing = false;
+      isResolvingMatch = false;
+      currentRoundColors = [];
+      renderRoundColors();
+
+      messageEl.textContent = "Keine Züge mehr!";
+      endMessageScoreEl.textContent = String(score);
+      endMessageEl.style.display = "block";
 
       // Make all blocks dance
-      cells.forEach((cell, i) => {
-        if (board[i] !== null) {
-          const rand = Math.floor(Math.random() * 3);
-          cell.classList.add(`dance${rand + 1}`);
+      cells.forEach((cell, idx) => {
+        if (board[idx] !== null) {
+          const delay = (idx % size) * 0.08 + Math.floor(idx / size) * 0.05;
+          cell.style.setProperty('--delay', `${delay}s`);
+          cell.classList.add("dance");
         }
       });
-
-      if (navigator.vibrate) navigator.vibrate(150);
     }
 
     restartBtn.addEventListener("click", () => {
-      cells.forEach(c => c.classList.remove("dance1", "dance2", "dance3"));
       initGame();
     });
 
-    // =========================
-    // TUTORIAL
-    // =========================
-    const tutorialSteps = [
-      {
-        text: "Wische über freie Felder, um alle Farben der Runde zu platzieren.",
-        colors: ["#e74c3c", "#f1c40f", "#2ecc71"]
-      },
-      {
-        text: "Drei oder mehr gleiche Farben, die sich berühren, verschwinden.",
-        colors: ["#e74c3c", "#e74c3c", "#e74c3c"]
-      },
-      {
-        text: "Je mehr Blöcke du auf einmal kombinierst, desto höher dein Score (N×N).",
-        colors: ["#3498db", "#3498db", "#9b59b6", "#9b59b6"]
-      }
-    ];
-    let tutorialIndex = 0;
-
-    function buildTutorialMiniBoard() {
-      tutorialMiniBoard.innerHTML = "";
-      for (let i = 0; i < 9; i++) {
-        const cell = document.createElement("div");
-        cell.className = "miniCell";
-        const dot = document.createElement("div");
-        dot.className = "miniDot";
-        dot.dataset.index = i;
-        cell.appendChild(dot);
-        tutorialMiniBoard.appendChild(cell);
-      }
-    }
-
-    function showTutorialStep(idx) {
-      const step = tutorialSteps[idx];
-      tutorialText.textContent = step.text;
-
-      const dots = tutorialMiniBoard.querySelectorAll(".miniDot");
-      dots.forEach(d => {
-        d.classList.remove("show");
-        d.style.background = "transparent";
+    // Pointer events for swiping (works on touch + mouse)
+    function setupPointerEvents() {
+      // Per-cell events (keep as in your version)
+      cells.forEach((cell, idx) => {
+        cell.addEventListener("pointerdown", (e) => {
+          handlePointerDown(idx, e);
+        });
+        cell.addEventListener("pointerenter", (e) => {
+          if (e.buttons === 1 || e.pointerType === "touch" || isDrawing) {
+            handlePointerMoveOver(idx, e);
+          }
+        });
       });
 
-      // Very simple fake animation: just show some coloured cells
-      if (idx === 0) {
-        const seq = [0, 1, 2];
-        seq.forEach((pos, i) => {
-          const dot = dots[pos];
-          dot.style.background = step.colors[i];
-          setTimeout(() => dot.classList.add("show"), i * 200);
-        });
-      } else if (idx === 1) {
-        const seq = [3, 4, 5];
-        seq.forEach((pos, i) => {
-          const dot = dots[pos];
-          dot.style.background = "#e74c3c";
-          setTimeout(() => dot.classList.add("show"), i * 180);
-        });
-      } else if (idx === 2) {
-        const seq = [6, 7, 8, 5];
-        seq.forEach((pos, i) => {
-          const dot = dots[pos];
-          dot.style.background = step.colors[i] || "#3498db";
-          setTimeout(() => dot.classList.add("show"), i * 180);
-        });
-      }
+      // Board-level pointermove so swiping on mobile follows the finger
+      boardEl.addEventListener("pointermove", (e) => {
+        if (!isDrawing) return;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        if (!el) return;
+        const cell = el.closest(".cell");
+        if (!cell) return;
+        const idx = parseInt(cell.dataset.index, 10);
+        if (!Number.isNaN(idx)) {
+          handlePointerMoveOver(idx, e);
+        }
+      });
+
+      document.addEventListener("pointerup", (e) => {
+        handlePointerUp(e);
+      });
+      document.addEventListener("pointercancel", (e) => {
+        handlePointerUp(e);
+      });
     }
 
-    tutorialBtn.addEventListener("click", () => {
-      tutorialOverlay.style.display = "flex";
-      tutorialIndex = 0;
-      buildTutorialMiniBoard();
-      showTutorialStep(tutorialIndex);
+    // Initialize after DOM is ready
+    document.addEventListener("DOMContentLoaded", () => {
+      initGame();
+      setupPointerEvents();
     });
 
-    tutorialCloseBtn.addEventListener("click", () => {
-      tutorialOverlay.style.display = "none";
-    });
-
-    tutorialNextBtn.addEventListener("click", () => {
-      tutorialIndex++;
-      if (tutorialIndex >= tutorialSteps.length) {
-        tutorialOverlay.style.display = "none";
-      } else {
-        showTutorialStep(tutorialIndex);
-      }
-    });
-
-    // =========================
-    // START GAME
-    // =========================
-    initGame();
   </script>
 </body>
 </html>
